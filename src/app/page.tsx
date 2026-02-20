@@ -1,6 +1,19 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import MarketHeader from "@/components/MarketHeader";
+
+const CandleChart = dynamic(() => import("@/components/CandleChart"), {
+  ssr: false,
+  loading: () => (
+    <div
+      className="flex items-center justify-center h-full"
+      style={{ color: "var(--text-muted)" }}
+    >
+      Loading chart…
+    </div>
+  ),
+});
 
 export default function TradingPage() {
   return (
@@ -12,10 +25,10 @@ export default function TradingPage() {
       <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_280px] grid-rows-[1fr_180px] overflow-hidden min-h-0">
         {/* Chart area */}
         <div
-          className="border-r border-b min-h-0 overflow-hidden flex items-center justify-center"
-          style={{ borderColor: "var(--border)", background: "var(--bg-primary)", color: "var(--text-muted)" }}
+          className="border-r border-b min-h-0 overflow-hidden"
+          style={{ borderColor: "var(--border)", background: "var(--bg-primary)" }}
         >
-          Chart
+          <CandleChart />
         </div>
 
         {/* Orderbook + Trading Panel */}
