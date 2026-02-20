@@ -3,6 +3,8 @@
 import dynamic from "next/dynamic";
 import MarketHeader from "@/components/MarketHeader";
 import Orderbook from "@/components/Orderbook";
+import TradingPanel from "@/components/TradingPanel";
+import PositionsTable from "@/components/PositionsTable";
 
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
@@ -40,20 +42,17 @@ export default function TradingPage() {
           <div className="flex-1 min-h-0 overflow-hidden">
             <Orderbook />
           </div>
-          <div
-            className="border-t flex items-center justify-center p-4"
-            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
-          >
-            Trading Panel
+          <div className="border-t" style={{ borderColor: "var(--border)" }}>
+            <TradingPanel />
           </div>
         </div>
 
         {/* Positions table */}
         <div
-          className="col-span-1 md:col-span-2 min-h-0 overflow-hidden flex items-center justify-center"
-          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
+          className="col-span-1 md:col-span-2 min-h-0 overflow-hidden"
+          style={{ background: "var(--bg-secondary)" }}
         >
-          Positions
+          <PositionsTable />
         </div>
       </div>
 
