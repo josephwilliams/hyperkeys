@@ -1,5 +1,6 @@
 "use client";
 
+import { useState, useCallback } from "react";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useTradingStore } from "@/stores/tradingStore";
 import { MARKETS, SIZE_INCREMENTS } from "@/lib/constants";
@@ -31,6 +32,17 @@ export default function TradingPanel() {
   const isLong = side === "long";
   const sideColor = isLong ? "var(--green)" : "var(--red)";
   const sideBg = isLong ? "var(--green-dim)" : "var(--red-dim)";
+
+  // Execution flash feedback
+  const [flashKey, setFlashKey] = useState(0);
+  const handleExecute = useCallback(() => {
+    const prevBalance = useTradingStore.getState().balance;
+    executeOrder(midsRef);
+    // If balance changed, the order went through — flash
+    if (useTradingStore.getState().balance !== prevBalance) {
+      setFlashKey((k) => k + 1);
+    }
+  }, [executeOrder, midsRef]);
 
   return (
     <div className="flex flex-col gap-2.5 px-4 py-3.5">
@@ -81,8 +93,9 @@ export default function TradingPanel() {
 
       {/* Execute */}
       <button
-        onClick={() => executeOrder(midsRef)}
-        className="w-full py-2 rounded text-xs font-bold uppercase tracking-wider"
+        key={flashKey}
+        onClick={handleExecute}
+        className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider ${flashKey > 0 ? "exec-flash" : ""}`}
         style={{ background: sideColor, color: "#fff" }}
       >
         {side === "long" ? "Buy" : "Sell"} / Enter ↵

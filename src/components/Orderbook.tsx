@@ -11,7 +11,7 @@ import OrderbookRow from "./OrderbookRow";
 export default function Orderbook() {
   const selectedCoin = useTradingStore((s) => s.selectedCoin);
   const denomination = useTradingStore((s) => s.denomination);
-  const { bids, asks } = useOrderbook(selectedCoin);
+  const { bids, asks, isLoading } = useOrderbook(selectedCoin);
   const { mids } = useAllMids();
 
   const market = MARKETS.find((m) => m.coin === selectedCoin)!;
@@ -63,6 +63,12 @@ export default function Orderbook() {
         <span>Price</span>
         <span>{denomination === "USD" ? "Size (USD)" : `Size (${selectedCoin})`}</span>
       </div>
+
+      {isLoading && bids.length === 0 ? (
+        <div className="flex-1 flex items-center justify-center text-xs" style={{ color: "var(--text-muted)" }}>
+          Loading orderbook…
+        </div>
+      ) : null}
 
       {/* Asks (reversed so lowest ask is at bottom) */}
       <div className="flex-1 flex flex-col justify-end overflow-hidden">

@@ -52,10 +52,12 @@ export default function MarketHeader() {
         {market.label}
       </span>
 
-      {midPrice !== null && (
+      {midPrice !== null ? (
         <span className={`text-sm font-semibold ${flashClass}`} style={{ color: "var(--text-primary)" }}>
           {formatPrice(midPrice, market.pxDecimals)}
         </span>
+      ) : (
+        <span className="text-xs" style={{ color: "var(--text-muted)" }}>Loading…</span>
       )}
 
       {change24h && (
