@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+
 import { getWs } from "@/lib/ws";
 
 export function useWsSubscription(
@@ -8,7 +9,9 @@ export function useWsSubscription(
   handler: (data: unknown) => void
 ) {
   const handlerRef = useRef(handler);
-  handlerRef.current = handler;
+  useEffect(() => {
+    handlerRef.current = handler;
+  });
 
   useEffect(() => {
     if (!key) return;

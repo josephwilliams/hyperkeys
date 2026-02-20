@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useMeta } from "@/hooks/useMeta";
 import { MARKETS_MAP } from "@/lib/constants";
@@ -21,20 +21,21 @@ export default function MarketHeader() {
   const prevDayPx = ctx ? parseFloat(ctx.prevDayPx) : null;
 
   const prevPriceRef = useRef(midPrice);
-  const [flashClass, setFlashClass] = useState("");
+  const priceElRef = useRef<HTMLSpanElement>(null);
 
   useEffect(() => {
-    if (midPrice === null || prevPriceRef.current === null) {
+    const el = priceElRef.current;
+    if (!el || midPrice === null || prevPriceRef.current === null) {
       prevPriceRef.current = midPrice;
       return;
     }
     if (midPrice > prevPriceRef.current) {
-      setFlashClass("flash-green");
+      el.classList.add("flash-green");
     } else if (midPrice < prevPriceRef.current) {
-      setFlashClass("flash-red");
+      el.classList.add("flash-red");
     }
     prevPriceRef.current = midPrice;
-    const t = setTimeout(() => setFlashClass(""), 1000);
+    const t = setTimeout(() => el.classList.remove("flash-green", "flash-red"), 1000);
     return () => clearTimeout(t);
   }, [midPrice]);
 
@@ -64,7 +65,7 @@ export default function MarketHeader() {
           />
 
           {midPrice !== null ? (
-            <span className={`text-sm font-semibold text-fg ${flashClass}`}>
+            <span ref={priceElRef} className="text-sm font-semibold text-fg">
               ${formatPrice(midPrice, market.pxDecimals)}
             </span>
           ) : (

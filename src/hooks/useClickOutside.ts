@@ -6,7 +6,9 @@ export function useClickOutside(
   onClose: () => void
 ) {
   const callbackRef = useRef(onClose);
-  callbackRef.current = onClose;
+  useEffect(() => {
+    callbackRef.current = onClose;
+  });
 
   useEffect(() => {
     if (!active) return;

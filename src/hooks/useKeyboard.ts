@@ -64,5 +64,5 @@ export function useKeyboard(midsRef: React.RefObject<AllMids>) {
 
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, [midsRef]);
+  }, [midsRef, store]);
 }

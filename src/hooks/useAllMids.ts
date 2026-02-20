@@ -1,7 +1,7 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useCallback } from "react";
+import { useRef, useCallback, useEffect } from "react";
 import { fetchAllMids } from "@/lib/api";
 import { useWsSubscription } from "./useWsSubscription";
 import { XYZ_DEX } from "@/lib/constants";
@@ -27,7 +27,9 @@ export function useAllMids() {
 
   // Merge both into a single object
   const merged: AllMids = { ...(defaultQuery.data ?? {}), ...(xyzQuery.data ?? {}) };
-  midsRef.current = merged;
+  useEffect(() => {
+    midsRef.current = merged;
+  });
 
   // WS handler for default dex
   const handleDefaultWs = useCallback(
