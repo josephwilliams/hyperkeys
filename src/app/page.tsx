@@ -1,12 +1,55 @@
-export default function Home() {
+"use client";
+
+import MarketHeader from "@/components/MarketHeader";
+
+export default function TradingPage() {
   return (
-    <main
-      className="flex items-center justify-center h-screen"
-      style={{ background: "var(--bg-primary)" }}
-    >
-      <h1 className="text-2xl font-bold" style={{ color: "var(--text-primary)" }}>
-        Hyperkeys
-      </h1>
-    </main>
+    <div className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
+      {/* Market header */}
+      <MarketHeader />
+
+      {/* Main grid */}
+      <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_280px] grid-rows-[1fr_180px] overflow-hidden min-h-0">
+        {/* Chart area */}
+        <div
+          className="border-r border-b min-h-0 overflow-hidden flex items-center justify-center"
+          style={{ borderColor: "var(--border)", background: "var(--bg-primary)", color: "var(--text-muted)" }}
+        >
+          Chart
+        </div>
+
+        {/* Orderbook + Trading Panel */}
+        <div
+          className="border-b flex-col hidden md:flex min-h-0 overflow-hidden"
+          style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}
+        >
+          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center" style={{ color: "var(--text-muted)" }}>
+            Orderbook
+          </div>
+          <div
+            className="border-t flex items-center justify-center p-4"
+            style={{ borderColor: "var(--border)", color: "var(--text-muted)" }}
+          >
+            Trading Panel
+          </div>
+        </div>
+
+        {/* Positions table */}
+        <div
+          className="col-span-1 md:col-span-2 min-h-0 overflow-hidden flex items-center justify-center"
+          style={{ background: "var(--bg-secondary)", color: "var(--text-muted)" }}
+        >
+          Positions
+        </div>
+      </div>
+
+      {/* Keyboard hints bar */}
+      <div
+        className="h-8 flex items-center px-8 border-t text-[10px] select-none"
+        style={{ borderColor: "var(--border)", background: "var(--bg-tertiary)", color: "var(--text-muted)" }}
+      >
+        Keyboard shortcuts
+      </div>
+    </div>
   );
 }
