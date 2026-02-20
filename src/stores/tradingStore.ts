@@ -137,6 +137,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
         size: orderSizeBase,
         entryPrice: markPrice,
         costBasis: orderSizeUsd,
+        timestamp: Date.now(),
       });
       set({ positions: newPositions, balance: balance - orderSizeUsd });
     } else if (existing.side === side) {
@@ -150,6 +151,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
         size: newSize,
         entryPrice: newEntry,
         costBasis: newCostBasis,
+        timestamp: Date.now(),
       };
       set({ positions: newPositions, balance: balance - orderSizeUsd });
     } else {
@@ -169,6 +171,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
           ...existing,
           size: remainingSize,
           costBasis: remainingCostBasis,
+          timestamp: Date.now(),
         };
         set({
           positions: newPositions,
@@ -195,6 +198,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
             size: remainderBase,
             entryPrice: markPrice,
             costBasis: remainderUsd,
+            timestamp: Date.now(),
           });
           newBalance -= remainderUsd;
         }

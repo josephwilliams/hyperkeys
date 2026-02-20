@@ -57,7 +57,7 @@ export default function Orderbook() {
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
       <div
-        className="flex items-center justify-between px-4 py-1.5 text-[10px] uppercase tracking-wider border-b"
+        className="flex items-center justify-between !px-4 !py-1.5 text-[10px] uppercase tracking-wider border-b"
         style={{ color: "var(--text-muted)", borderColor: "var(--border)" }}
       >
         <span>Price</span>

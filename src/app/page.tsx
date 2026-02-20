@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useKeyboard } from "@/hooks/useKeyboard";
@@ -26,6 +27,7 @@ const CandleChart = dynamic(() => import("@/components/CandleChart"), {
 export default function TradingPage() {
   const { midsRef } = useAllMids();
   const executeOrder = useTradingStore((s) => s.executeOrder);
+  const [mobileOrderbook, setMobileOrderbook] = useState(false);
   useKeyboard(midsRef);
 
   return (
@@ -34,7 +36,21 @@ export default function TradingPage() {
       <MarketHeader />
 
       {/* Mobile controls (hidden on md+) */}
-      <MobileControls onExecute={() => executeOrder(midsRef)} />
+      <MobileControls
+        onExecute={() => executeOrder(midsRef)}
+        showOrderbook={mobileOrderbook}
+        onToggleOrderbook={() => setMobileOrderbook((v) => !v)}
+      />
+
+      {/* Mobile orderbook (hidden on md+) */}
+      {mobileOrderbook && (
+        <div
+          className="md:hidden border-b overflow-hidden"
+          style={{ borderColor: "var(--border)", background: "var(--bg-secondary)", height: "240px" }}
+        >
+          <Orderbook />
+        </div>
+      )}
 
       {/* Main grid */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_280px] grid-rows-[1fr_180px] overflow-hidden min-h-0">

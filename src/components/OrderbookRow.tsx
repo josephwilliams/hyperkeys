@@ -21,7 +21,7 @@ const OrderbookRow = React.memo(function OrderbookRow({
 
   return (
     <div
-      className="relative flex items-center justify-between px-4 py-[2px] text-xs font-mono"
+      className="relative flex items-center justify-between !px-4 !py-[2px] text-xs font-mono"
       style={{ height: "20px" }}
     >
       {/* Depth bar */}

@@ -54,7 +54,7 @@ function CandleChartInner() {
   const theme = useTradingStore((s) => s.theme);
   const { candles } = useCandles(selectedCoin, candleInterval);
 
-  // Create chart
+  // Create chart (recreate on market/interval change, NOT theme)
   useEffect(() => {
     if (!containerRef.current) return;
     const colors = getChartColors(theme);
@@ -109,7 +109,30 @@ function CandleChartInner() {
       chartRef.current = null;
       seriesRef.current = null;
     };
-  }, [selectedCoin, candleInterval, theme]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedCoin, candleInterval]);
+
+  // Update chart colors on theme change without recreating
+  useEffect(() => {
+    if (!chartRef.current) return;
+    const colors = getChartColors(theme);
+    chartRef.current.applyOptions({
+      layout: {
+        background: { type: ColorType.Solid, color: colors.bg },
+        textColor: colors.text,
+      },
+      grid: {
+        vertLines: { color: colors.grid },
+        horzLines: { color: colors.grid },
+      },
+      crosshair: {
+        vertLine: { color: colors.crosshair },
+        horzLine: { color: colors.crosshair },
+      },
+      rightPriceScale: { borderColor: colors.border },
+      timeScale: { borderColor: colors.border },
+    });
+  }, [theme]);
 
   // Update data
   useEffect(() => {

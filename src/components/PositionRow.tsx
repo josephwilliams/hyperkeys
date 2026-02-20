@@ -54,6 +54,9 @@ const PositionRow = React.memo(function PositionRow({
       >
         {formatPnlPercent(uPnl, position.costBasis)}
       </td>
+      <td className="px-5 py-2.5 text-[10px]" style={{ color: "var(--text-muted)" }}>
+        {new Date(position.timestamp).toLocaleTimeString()}
+      </td>
     </tr>
   );
 });

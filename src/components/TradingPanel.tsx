@@ -38,14 +38,13 @@ export default function TradingPanel() {
   const handleExecute = useCallback(() => {
     const prevBalance = useTradingStore.getState().balance;
     executeOrder(midsRef);
-    // If balance changed, the order went through — flash
     if (useTradingStore.getState().balance !== prevBalance) {
       setFlashKey((k) => k + 1);
     }
   }, [executeOrder, midsRef]);
 
   return (
-    <div className="flex flex-col gap-2.5 px-4 py-3.5">
+    <div className="flex flex-col gap-2.5 !px-4 !py-3.5">
       {/* Balance */}
       <div className="flex items-center justify-between text-[10px]" style={{ color: "var(--text-muted)" }}>
         <span>Balance</span>

@@ -14,6 +14,7 @@ export interface Position {
   size: number; // always positive, in base units
   entryPrice: number;
   costBasis: number; // total USD locked (size * entryPrice)
+  timestamp: number; // ms since epoch, set on open/last modification
 }
 
 export type CandleInterval =

@@ -39,12 +39,6 @@
   --chart-text: #555570;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
 html,
 body {
   background: var(--bg-primary);
@@ -70,18 +64,18 @@ body {
 
 /* Price flash animations */
 @keyframes flash-green {
-  0% { background-color: var(--green-dim); }
+  0%, 50% { background-color: var(--green-dim); }
   100% { background-color: transparent; }
 }
 @keyframes flash-red {
-  0% { background-color: var(--red-dim); }
+  0%, 50% { background-color: var(--red-dim); }
   100% { background-color: transparent; }
 }
 .flash-green {
-  animation: flash-green 0.4s ease-out;
+  animation: flash-green 1s ease-out;
 }
 .flash-red {
-  animation: flash-red 0.4s ease-out;
+  animation: flash-red 1s ease-out;
 }
 
 /* Order execution flash */

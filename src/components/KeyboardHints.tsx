@@ -21,7 +21,7 @@ export default function KeyboardHints() {
 
   return (
     <div
-      className="h-8 flex items-center px-8 gap-4 border-t text-[10px] select-none overflow-x-auto"
+      className="h-8 flex items-center !px-12 gap-4 border-t text-[10px] select-none overflow-x-auto"
       style={{
         borderColor: "var(--border)",
         background: "var(--bg-tertiary)",
