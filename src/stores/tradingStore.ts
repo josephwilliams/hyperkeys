@@ -4,11 +4,13 @@ import { create } from "zustand";
 import type { Side, Denomination, Position, CandleInterval } from "@/types/trading";
 import {
   MARKETS,
+  CANDLE_INTERVALS,
   STARTING_BALANCE,
   DEFAULT_INTERVAL,
   SIZE_INCREMENTS,
   DEFAULT_SIZE_INCREMENT_INDEX,
 } from "@/lib/constants";
+import { calcPnlPerUnit } from "@/lib/format";
 import type { AllMids } from "@/types/api";
 
 type Theme = "dark" | "light";
@@ -69,13 +71,8 @@ export const useTradingStore = create<TradingState>((set, get) => ({
 
   cycleCandleInterval: () => {
     const { candleInterval } = get();
-    const intervals: CandleInterval[] = [
-      "1m", "3m", "5m", "15m", "30m",
-      "1h", "2h", "4h", "8h", "12h",
-      "1d", "3d", "1w", "1M",
-    ];
-    const idx = intervals.indexOf(candleInterval);
-    set({ candleInterval: intervals[(idx + 1) % intervals.length] });
+    const idx = CANDLE_INTERVALS.indexOf(candleInterval);
+    set({ candleInterval: CANDLE_INTERVALS[(idx + 1) % CANDLE_INTERVALS.length] });
   },
 
   toggleSide: () =>
@@ -156,10 +153,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
       set({ positions: newPositions, balance: balance - orderSizeUsd });
     } else {
       // Opposite side
-      const pnlPerUnit =
-        existing.side === "long"
-          ? markPrice - existing.entryPrice
-          : existing.entryPrice - markPrice;
+      const pnlPerUnit = calcPnlPerUnit(existing.side, existing.entryPrice, markPrice);
 
       if (orderSizeBase < existing.size) {
         // Partial reduce

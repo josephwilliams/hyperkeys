@@ -4,9 +4,37 @@ import { useMemo } from "react";
 import { useOrderbook } from "@/hooks/useOrderbook";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useTradingStore } from "@/stores/tradingStore";
-import { MARKETS, ORDERBOOK_LEVELS } from "@/lib/constants";
+import { MARKETS_MAP, ORDERBOOK_LEVELS } from "@/lib/constants";
 import { formatPrice, formatSize } from "@/lib/format";
 import OrderbookRow from "./OrderbookRow";
+
+function buildDepthLevels(
+  levels: { px: string; sz: string }[],
+  denomination: string,
+  pxDecimals: number,
+  szDecimals: number,
+) {
+  const sizes = levels.map((l) => parseFloat(l.sz));
+  const cumulative: number[] = [];
+  let sum = 0;
+  for (const sz of sizes) {
+    sum += sz;
+    cumulative.push(sum);
+  }
+  const maxCum = cumulative[cumulative.length - 1] || 0.001;
+  return levels.map((level, i) => {
+    const sz = sizes[i];
+    const displaySize =
+      denomination === "USD"
+        ? (sz * parseFloat(level.px)).toFixed(0)
+        : formatSize(sz, szDecimals);
+    return {
+      price: formatPrice(parseFloat(level.px), pxDecimals),
+      size: displaySize,
+      depthPercent: (cumulative[i] / maxCum) * 100,
+    };
+  });
+}
 
 export default function Orderbook() {
   const selectedCoin = useTradingStore((s) => s.selectedCoin);
@@ -14,58 +42,15 @@ export default function Orderbook() {
   const { bids, asks, isLoading } = useOrderbook(selectedCoin);
   const { mids } = useAllMids();
 
-  const market = MARKETS.find((m) => m.coin === selectedCoin)!;
+  const market = MARKETS_MAP[selectedCoin];
   const midPrice = mids[selectedCoin] ? parseFloat(mids[selectedCoin]) : null;
 
   const displayAsks = useMemo(() => {
-    const sliced = asks.slice(0, ORDERBOOK_LEVELS);
-    // Build cumulative sizes (from spread outward)
-    const sizes = sliced.map((l) => parseFloat(l.sz));
-    const cumulative: number[] = [];
-    let sum = 0;
-    for (const sz of sizes) {
-      sum += sz;
-      cumulative.push(sum);
-    }
-    const maxCum = cumulative[cumulative.length - 1] || 0.001;
-    return sliced
-      .map((level, i) => {
-        const sz = sizes[i];
-        const displaySize =
-          denomination === "USD"
-            ? (sz * parseFloat(level.px)).toFixed(0)
-            : formatSize(sz, market.szDecimals);
-        return {
-          price: formatPrice(parseFloat(level.px), market.pxDecimals),
-          size: displaySize,
-          depthPercent: (cumulative[i] / maxCum) * 100,
-        };
-      })
-      .reverse();
+    return buildDepthLevels(asks.slice(0, ORDERBOOK_LEVELS), denomination, market.pxDecimals, market.szDecimals).reverse();
   }, [asks, denomination, market]);
 
   const displayBids = useMemo(() => {
-    const sliced = bids.slice(0, ORDERBOOK_LEVELS);
-    const sizes = sliced.map((l) => parseFloat(l.sz));
-    const cumulative: number[] = [];
-    let sum = 0;
-    for (const sz of sizes) {
-      sum += sz;
-      cumulative.push(sum);
-    }
-    const maxCum = cumulative[cumulative.length - 1] || 0.001;
-    return sliced.map((level, i) => {
-      const sz = sizes[i];
-      const displaySize =
-        denomination === "USD"
-          ? (sz * parseFloat(level.px)).toFixed(0)
-          : formatSize(sz, market.szDecimals);
-      return {
-        price: formatPrice(parseFloat(level.px), market.pxDecimals),
-        size: displaySize,
-        depthPercent: (cumulative[i] / maxCum) * 100,
-      };
-    });
+    return buildDepthLevels(bids.slice(0, ORDERBOOK_LEVELS), denomination, market.pxDecimals, market.szDecimals);
   }, [bids, denomination, market]);
 
   return (

@@ -1,8 +1,8 @@
 "use client";
 
 import React from "react";
-import { MARKETS } from "@/lib/constants";
-import { formatPrice, formatSize, formatPnl, formatPnlPercent } from "@/lib/format";
+import { MARKETS_MAP } from "@/lib/constants";
+import { formatPrice, formatSize, formatPnl, formatPnlPercent, calcPnlPerUnit } from "@/lib/format";
 import type { Position } from "@/types/trading";
 
 interface PositionRowProps {
@@ -14,12 +14,8 @@ const PositionRow = React.memo(function PositionRow({
   position,
   markPrice,
 }: PositionRowProps) {
-  const market = MARKETS.find((m) => m.coin === position.coin)!;
-  const pnlPerUnit =
-    position.side === "long"
-      ? markPrice - position.entryPrice
-      : position.entryPrice - markPrice;
-  const uPnl = pnlPerUnit * position.size;
+  const market = MARKETS_MAP[position.coin];
+  const uPnl = calcPnlPerUnit(position.side, position.entryPrice, markPrice) * position.size;
   const isProfit = uPnl >= 0;
 
   return (

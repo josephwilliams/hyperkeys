@@ -13,6 +13,10 @@ export const MARKETS: Market[] = [
 // Coins that live on the xyz builder dex (need separate allMids/meta queries)
 export const XYZ_DEX = "xyz";
 
+export const MARKETS_MAP: Record<string, Market> = Object.fromEntries(
+  MARKETS.map((m) => [m.coin, m])
+);
+
 export const MARKET_COINS = MARKETS.map((m) => m.coin);
 
 export const CANDLE_INTERVALS: CandleInterval[] = [

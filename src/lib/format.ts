@@ -37,6 +37,10 @@ export function formatPnlPercent(pnl: number, costBasis: number): string {
   return `${sign}${pct.toFixed(2)}%`;
 }
 
+export function calcPnlPerUnit(side: "long" | "short", entryPrice: number, markPrice: number): number {
+  return side === "long" ? markPrice - entryPrice : entryPrice - markPrice;
+}
+
 export function formatChange24h(current: number, prev: number): string {
   if (prev === 0) return "0.00%";
   const pct = ((current - prev) / prev) * 100;

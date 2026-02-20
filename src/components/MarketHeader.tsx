@@ -3,36 +3,22 @@
 import { useEffect, useRef, useState } from "react";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useMeta } from "@/hooks/useMeta";
-import { MARKETS } from "@/lib/constants";
+import { MARKETS_MAP } from "@/lib/constants";
 import { formatPrice, formatChange24h } from "@/lib/format";
 import { useTradingStore } from "@/stores/tradingStore";
+import MarketDropdown from "./MarketDropdown";
 
 export default function MarketHeader() {
   const selectedCoin = useTradingStore((s) => s.selectedCoin);
-  const setSelectedCoin = useTradingStore((s) => s.setSelectedCoin);
   const theme = useTradingStore((s) => s.theme);
   const toggleTheme = useTradingStore((s) => s.toggleTheme);
-  const market = MARKETS.find((m) => m.coin === selectedCoin)!;
+  const market = MARKETS_MAP[selectedCoin];
   const { mids } = useAllMids();
   const { assetCtxMap } = useMeta();
 
   const midPrice = mids[selectedCoin] ? parseFloat(mids[selectedCoin]) : null;
   const ctx = assetCtxMap[selectedCoin];
   const prevDayPx = ctx ? parseFloat(ctx.prevDayPx) : null;
-
-  const [marketOpen, setMarketOpen] = useState(false);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!marketOpen) return;
-    function handleClick(e: MouseEvent) {
-      if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
-        setMarketOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClick);
-    return () => document.removeEventListener("mousedown", handleClick);
-  }, [marketOpen]);
 
   const prevPriceRef = useRef(midPrice);
   const [flashClass, setFlashClass] = useState("");
@@ -58,6 +44,11 @@ export default function MarketHeader() {
       : null;
   const isPositive = midPrice !== null && prevDayPx !== null && midPrice >= prevDayPx;
 
+  const fundingStr = ctx ? `${(parseFloat(ctx.funding) * 100).toFixed(4)}%` : null;
+  const oiStr = ctx
+    ? `$${(parseFloat(ctx.openInterest) * (midPrice ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}`
+    : null;
+
   return (
     <div
       className="border-b select-none"
@@ -67,35 +58,17 @@ export default function MarketHeader() {
       <div className="h-12 flex items-center justify-between">
         {/* Market info */}
         <div className="flex items-center gap-6 !px-6">
-          <div className="relative" ref={dropdownRef}>
-            <button
-              onClick={() => setMarketOpen((v) => !v)}
-              className="font-bold text-sm"
-              style={{ color: "var(--text-primary)" }}
-            >
-              {market.label} <span className="text-sm" style={{ color: "var(--text-muted)" }}>▾</span>
-            </button>
-            {marketOpen && (
-              <div
-                className="absolute top-full left-0 mt-1 rounded z-50 overflow-hidden"
-                style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+          <MarketDropdown
+            renderTrigger={(toggle) => (
+              <button
+                onClick={toggle}
+                className="font-bold text-sm"
+                style={{ color: "var(--text-primary)" }}
               >
-                {MARKETS.map((m) => (
-                  <button
-                    key={m.coin}
-                    onClick={() => { setSelectedCoin(m.coin); setMarketOpen(false); }}
-                    className="block w-full text-left px-4 py-2 text-xs whitespace-nowrap"
-                    style={{
-                      color: m.coin === selectedCoin ? "var(--text-primary)" : "var(--text-secondary)",
-                      background: m.coin === selectedCoin ? "var(--bg-tertiary)" : "transparent",
-                    }}
-                  >
-                    {m.label}
-                  </button>
-                ))}
-              </div>
+                {market.label} <span className="text-sm" style={{ color: "var(--text-muted)" }}>▾</span>
+              </button>
             )}
-          </div>
+          />
 
           {midPrice !== null ? (
             <span className={`text-sm font-semibold ${flashClass}`} style={{ color: "var(--text-primary)" }}>
@@ -118,10 +91,10 @@ export default function MarketHeader() {
           {ctx && (
             <>
               <span className="text-xs hidden md:inline" style={{ color: "var(--text-secondary)" }}>
-                Funding: {(parseFloat(ctx.funding) * 100).toFixed(4)}%
+                Funding: {fundingStr}
               </span>
               <span className="text-xs hidden md:inline" style={{ color: "var(--text-secondary)" }}>
-                OI: ${(parseFloat(ctx.openInterest) * (midPrice ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+                OI: {oiStr}
               </span>
             </>
           )}
@@ -155,10 +128,10 @@ export default function MarketHeader() {
           style={{ borderColor: "var(--border)" }}
         >
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            Funding: {(parseFloat(ctx.funding) * 100).toFixed(4)}%
+            Funding: {fundingStr}
           </span>
           <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
-            OI: ${(parseFloat(ctx.openInterest) * (midPrice ?? 0)).toLocaleString("en-US", { maximumFractionDigits: 0 })}
+            OI: {oiStr}
           </span>
         </div>
       )}

@@ -2,7 +2,7 @@
 
 import { useTradingStore } from "@/stores/tradingStore";
 import { useAllMids } from "@/hooks/useAllMids";
-import { formatUsd } from "@/lib/format";
+import { formatUsd, calcPnlPerUnit } from "@/lib/format";
 import PositionRow from "./PositionRow";
 
 export default function PositionsTable() {
@@ -10,13 +10,10 @@ export default function PositionsTable() {
   const balance = useTradingStore((s) => s.balance);
   const { mids } = useAllMids();
 
-  // Calculate total uPnL
   let totalUPnl = 0;
   for (const pos of positions) {
     const mark = mids[pos.coin] ? parseFloat(mids[pos.coin]) : pos.entryPrice;
-    const pnlPerUnit =
-      pos.side === "long" ? mark - pos.entryPrice : pos.entryPrice - mark;
-    totalUPnl += pnlPerUnit * pos.size;
+    totalUPnl += calcPnlPerUnit(pos.side, pos.entryPrice, mark) * pos.size;
   }
 
   return (

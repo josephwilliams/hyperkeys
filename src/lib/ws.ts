@@ -1,4 +1,4 @@
-import { WS_URL } from "./constants";
+import { WS_URL, CANDLE_INTERVALS } from "./constants";
 
 type MessageHandler = (data: unknown) => void;
 
@@ -131,10 +131,9 @@ class HyperliquidWs {
       const parts = key.split(":");
       // Handle coins like "xyz:PLTR" — key is "candle:xyz:PLTR:1h"
       // Find interval (last segment that matches interval pattern)
-      const intervals = ["1m","3m","5m","15m","30m","1h","2h","4h","8h","12h","1d","3d","1w","1M"];
       const interval = parts[parts.length - 1];
       const coin = parts.slice(1, -1).join(":");
-      if (intervals.includes(interval)) {
+      if (CANDLE_INTERVALS.includes(interval as typeof CANDLE_INTERVALS[number])) {
         return { type: "candle", coin, interval };
       }
       return null;
