@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import dynamic from "next/dynamic";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useKeyboard } from "@/hooks/useKeyboard";
@@ -25,8 +25,11 @@ const CandleChart = dynamic(() => import("@/components/CandleChart"), {
 export default function TradingPage() {
   const { midsRef } = useAllMids();
   const executeOrder = useTradingStore((s) => s.executeOrder);
+  const syncTheme = useTradingStore((s) => s.syncTheme);
   const [mobileOrderbook, setMobileOrderbook] = useState(false);
   useKeyboard(midsRef);
+
+  useEffect(() => { syncTheme(); }, [syncTheme]);
 
   return (
     <ErrorBoundary>

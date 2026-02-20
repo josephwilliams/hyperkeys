@@ -13,7 +13,14 @@ export default function RootLayout({
   children: React.ReactNode;
 }) {
   return (
-    <html lang="en" className="dark">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script
+          dangerouslySetInnerHTML={{
+            __html: `(function(){var h=new Date().getHours();document.documentElement.className=(h>=7&&h<19)?"light":"dark"})()`,
+          }}
+        />
+      </head>
       <body>
         <QueryProvider>{children}</QueryProvider>
       </body>

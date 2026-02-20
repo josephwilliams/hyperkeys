@@ -45,6 +45,7 @@ interface TradingState {
   cycleSizeIncrement: () => void;
   executeOrder: (midsRef: React.RefObject<AllMids>) => void;
   toggleTheme: () => void;
+  syncTheme: () => void;
 }
 
 export const useTradingStore = create<TradingState>((set, get) => ({
@@ -107,6 +108,11 @@ export const useTradingStore = create<TradingState>((set, get) => ({
     const next = get().theme === "dark" ? "light" : "dark";
     document.documentElement.className = next;
     set({ theme: next });
+  },
+
+  syncTheme: () => {
+    const cls = document.documentElement.className as Theme;
+    if (cls === "light" || cls === "dark") set({ theme: cls });
   },
 
   executeOrder: (midsRef) => {
