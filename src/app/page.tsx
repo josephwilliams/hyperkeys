@@ -1,10 +1,15 @@
 "use client";
 
 import dynamic from "next/dynamic";
+import { useAllMids } from "@/hooks/useAllMids";
+import { useKeyboard } from "@/hooks/useKeyboard";
+import { useTradingStore } from "@/stores/tradingStore";
 import MarketHeader from "@/components/MarketHeader";
 import Orderbook from "@/components/Orderbook";
 import TradingPanel from "@/components/TradingPanel";
 import PositionsTable from "@/components/PositionsTable";
+import KeyboardHints from "@/components/KeyboardHints";
+import MobileControls from "@/components/MobileControls";
 
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
@@ -19,10 +24,17 @@ const CandleChart = dynamic(() => import("@/components/CandleChart"), {
 });
 
 export default function TradingPage() {
+  const { midsRef } = useAllMids();
+  const executeOrder = useTradingStore((s) => s.executeOrder);
+  useKeyboard(midsRef);
+
   return (
     <div className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
       {/* Market header */}
       <MarketHeader />
+
+      {/* Mobile controls (hidden on md+) */}
+      <MobileControls onExecute={() => executeOrder(midsRef)} />
 
       {/* Main grid */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_280px] grid-rows-[1fr_180px] overflow-hidden min-h-0">
@@ -57,12 +69,7 @@ export default function TradingPage() {
       </div>
 
       {/* Keyboard hints bar */}
-      <div
-        className="h-8 flex items-center px-8 border-t text-[10px] select-none"
-        style={{ borderColor: "var(--border)", background: "var(--bg-tertiary)", color: "var(--text-muted)" }}
-      >
-        Keyboard shortcuts
-      </div>
+      <KeyboardHints />
     </div>
   );
 }
