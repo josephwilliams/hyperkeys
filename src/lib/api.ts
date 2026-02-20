@@ -43,15 +43,17 @@ export async function fetchL2Book(coin: string): Promise<L2BookSnapshot> {
   });
 }
 
-export async function fetchAllMids(): Promise<AllMids> {
+export async function fetchAllMids(dex?: string): Promise<AllMids> {
   return postInfo<AllMids>({
     type: "allMids",
+    ...(dex ? { dex } : {}),
   });
 }
 
-export async function fetchMetaAndAssetCtxs(): Promise<MetaAndAssetCtxs> {
+export async function fetchMetaAndAssetCtxs(dex?: string): Promise<MetaAndAssetCtxs> {
   const raw = await postInfo<[MetaAndAssetCtxs["meta"], MetaAndAssetCtxs["assetCtxs"]]>({
     type: "metaAndAssetCtxs",
+    ...(dex ? { dex } : {}),
   });
   return { meta: raw[0], assetCtxs: raw[1] };
 }

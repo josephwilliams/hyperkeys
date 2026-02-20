@@ -91,7 +91,12 @@ class HyperliquidWs {
         }
       }
     } else if (channel === "allMids") {
-      const keyed = this.subscriptions.get("allMids");
+      // Determine if this is default or xyz dex by checking for xyz: prefixed keys
+      const d = data as { mids?: Record<string, string> };
+      const keys = d.mids ? Object.keys(d.mids) : [];
+      const isXyz = keys.some((k) => k.startsWith("xyz:"));
+      const subKey = isXyz ? "allMids:xyz" : "allMids";
+      const keyed = this.subscriptions.get(subKey);
       if (keyed) {
         for (const handler of keyed.handlers) handler(data);
       }
@@ -118,13 +123,24 @@ class HyperliquidWs {
     if (key === "allMids") {
       return { type: "allMids" };
     }
+    if (key === "allMids:xyz") {
+      return { type: "allMids", dex: "xyz" };
+    }
     if (key.startsWith("l2Book:")) {
       const coin = key.slice("l2Book:".length);
       return { type: "l2Book", coin };
     }
     if (key.startsWith("candle:")) {
       const parts = key.split(":");
-      return { type: "candle", coin: parts[1], interval: parts[2] };
+      // Handle coins like "xyz:PLTR" — key is "candle:xyz:PLTR:1h"
+      // Find interval (last segment that matches interval pattern)
+      const intervals = ["1m","3m","5m","15m","30m","1h","2h","4h","8h","12h","1d","3d","1w","1M"];
+      const interval = parts[parts.length - 1];
+      const coin = parts.slice(1, -1).join(":");
+      if (intervals.includes(interval)) {
+        return { type: "candle", coin, interval };
+      }
+      return null;
     }
     return null;
   }

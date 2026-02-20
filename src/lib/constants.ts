@@ -6,9 +6,12 @@ export const WS_URL = "wss://api.hyperliquid.xyz/ws";
 export const MARKETS: Market[] = [
   { coin: "BTC", label: "BTC-PERP", szDecimals: 5, pxDecimals: 1 },
   { coin: "ETH", label: "ETH-PERP", szDecimals: 4, pxDecimals: 2 },
-  { coin: "PLTR", label: "PLTR-PERP", szDecimals: 0, pxDecimals: 4 },
-  { coin: "GOLD", label: "GOLD-PERP", szDecimals: 0, pxDecimals: 2 },
+  { coin: "xyz:PLTR", label: "PLTR-PERP", szDecimals: 3, pxDecimals: 2 },
+  { coin: "xyz:GOLD", label: "GOLD-PERP", szDecimals: 4, pxDecimals: 1 },
 ];
+
+// Coins that live on the xyz builder dex (need separate allMids/meta queries)
+export const XYZ_DEX = "xyz";
 
 export const MARKET_COINS = MARKETS.map((m) => m.coin);
 

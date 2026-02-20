@@ -4,35 +4,61 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRef, useCallback } from "react";
 import { fetchAllMids } from "@/lib/api";
 import { useWsSubscription } from "./useWsSubscription";
+import { XYZ_DEX } from "@/lib/constants";
 import type { AllMids, WsAllMidsData } from "@/types/api";
 
 export function useAllMids() {
   const queryClient = useQueryClient();
   const midsRef = useRef<AllMids>({});
 
-  const query = useQuery({
+  // Default dex mids
+  const defaultQuery = useQuery({
     queryKey: ["allMids"],
-    queryFn: fetchAllMids,
-    staleTime: Infinity, // WS keeps it fresh
+    queryFn: () => fetchAllMids(),
+    staleTime: Infinity,
   });
 
-  // Keep ref in sync with query data
-  if (query.data) {
-    midsRef.current = query.data;
-  }
+  // xyz dex mids
+  const xyzQuery = useQuery({
+    queryKey: ["allMids", XYZ_DEX],
+    queryFn: () => fetchAllMids(XYZ_DEX),
+    staleTime: Infinity,
+  });
 
-  const handleWsMessage = useCallback(
+  // Merge both into a single object
+  const merged: AllMids = { ...(defaultQuery.data ?? {}), ...(xyzQuery.data ?? {}) };
+  midsRef.current = merged;
+
+  // WS handler for default dex
+  const handleDefaultWs = useCallback(
     (data: unknown) => {
       const d = data as WsAllMidsData;
       if (d.mids) {
-        midsRef.current = d.mids;
         queryClient.setQueryData<AllMids>(["allMids"], d.mids);
+        midsRef.current = { ...midsRef.current, ...d.mids };
       }
     },
     [queryClient]
   );
 
-  useWsSubscription("allMids", handleWsMessage);
+  // WS handler for xyz dex
+  const handleXyzWs = useCallback(
+    (data: unknown) => {
+      const d = data as WsAllMidsData;
+      if (d.mids) {
+        queryClient.setQueryData<AllMids>(["allMids", XYZ_DEX], d.mids);
+        midsRef.current = { ...midsRef.current, ...d.mids };
+      }
+    },
+    [queryClient]
+  );
 
-  return { mids: query.data ?? {}, midsRef, isLoading: query.isLoading };
+  useWsSubscription("allMids", handleDefaultWs);
+  useWsSubscription("allMids:xyz", handleXyzWs);
+
+  return {
+    mids: merged,
+    midsRef,
+    isLoading: defaultQuery.isLoading || xyzQuery.isLoading,
+  };
 }
