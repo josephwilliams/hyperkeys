@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { useContainerSize } from "@/hooks/useContainerSize";
 import {
   createChart,
   type IChartApi,
@@ -53,6 +54,7 @@ function CandleChartInner() {
   const candleInterval = useTradingStore((s) => s.candleInterval);
   const theme = useTradingStore((s) => s.theme);
   const { candles } = useCandles(selectedCoin, candleInterval);
+  const { width, height } = useContainerSize(containerRef);
 
   // Create chart (recreate on market/interval change, NOT theme)
   useEffect(() => {
@@ -97,14 +99,7 @@ function CandleChartInner() {
     seriesRef.current = series;
     prevDataLenRef.current = 0;
 
-    const resizeObserver = new ResizeObserver((entries) => {
-      const { width, height } = entries[0].contentRect;
-      chart.applyOptions({ width, height });
-    });
-    resizeObserver.observe(containerRef.current);
-
     return () => {
-      resizeObserver.disconnect();
       chart.remove();
       chartRef.current = null;
       seriesRef.current = null;
