@@ -19,10 +19,18 @@ export default function Orderbook() {
 
   const displayAsks = useMemo(() => {
     const sliced = asks.slice(0, ORDERBOOK_LEVELS);
-    const maxSz = Math.max(...sliced.map((l) => parseFloat(l.sz)), 0.001);
+    // Build cumulative sizes (from spread outward)
+    const sizes = sliced.map((l) => parseFloat(l.sz));
+    const cumulative: number[] = [];
+    let sum = 0;
+    for (const sz of sizes) {
+      sum += sz;
+      cumulative.push(sum);
+    }
+    const maxCum = cumulative[cumulative.length - 1] || 0.001;
     return sliced
-      .map((level) => {
-        const sz = parseFloat(level.sz);
+      .map((level, i) => {
+        const sz = sizes[i];
         const displaySize =
           denomination === "USD"
             ? (sz * parseFloat(level.px)).toFixed(0)
@@ -30,7 +38,7 @@ export default function Orderbook() {
         return {
           price: formatPrice(parseFloat(level.px), market.pxDecimals),
           size: displaySize,
-          depthPercent: (sz / maxSz) * 100,
+          depthPercent: (cumulative[i] / maxCum) * 100,
         };
       })
       .reverse();
@@ -38,9 +46,16 @@ export default function Orderbook() {
 
   const displayBids = useMemo(() => {
     const sliced = bids.slice(0, ORDERBOOK_LEVELS);
-    const maxSz = Math.max(...sliced.map((l) => parseFloat(l.sz)), 0.001);
-    return sliced.map((level) => {
-      const sz = parseFloat(level.sz);
+    const sizes = sliced.map((l) => parseFloat(l.sz));
+    const cumulative: number[] = [];
+    let sum = 0;
+    for (const sz of sizes) {
+      sum += sz;
+      cumulative.push(sum);
+    }
+    const maxCum = cumulative[cumulative.length - 1] || 0.001;
+    return sliced.map((level, i) => {
+      const sz = sizes[i];
       const displaySize =
         denomination === "USD"
           ? (sz * parseFloat(level.px)).toFixed(0)
@@ -48,7 +63,7 @@ export default function Orderbook() {
       return {
         price: formatPrice(parseFloat(level.px), market.pxDecimals),
         size: displaySize,
-        depthPercent: (sz / maxSz) * 100,
+        depthPercent: (cumulative[i] / maxCum) * 100,
       };
     });
   }, [bids, denomination, market]);
