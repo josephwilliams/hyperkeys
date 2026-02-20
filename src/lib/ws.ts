@@ -65,16 +65,17 @@ class HyperliquidWs {
   }
 
   private routeMessage(channel: string, data: unknown) {
-    // Try exact channel match first
-    const sub = this.subscriptions.get(channel);
-    if (sub) {
-      for (const handler of sub.handlers) {
-        handler(data);
+    if (channel === "allMids") {
+      // Determine if this is default or xyz dex by checking for xyz: prefixed keys
+      const d = data as { mids?: Record<string, string> };
+      const keys = d.mids ? Object.keys(d.mids) : [];
+      const isXyz = keys.some((k) => k.startsWith("xyz:"));
+      const subKey = isXyz ? "allMids:xyz" : "allMids";
+      const keyed = this.subscriptions.get(subKey);
+      if (keyed) {
+        for (const handler of keyed.handlers) handler(data);
       }
-      return;
-    }
-    // For channels with sub-keys, try matching with data
-    if (channel === "l2Book") {
+    } else if (channel === "l2Book") {
       const d = data as { coin?: string };
       if (d.coin) {
         const keyed = this.subscriptions.get(`l2Book:${d.coin}`);
@@ -90,15 +91,11 @@ class HyperliquidWs {
           for (const handler of keyed.handlers) handler(data);
         }
       }
-    } else if (channel === "allMids") {
-      // Determine if this is default or xyz dex by checking for xyz: prefixed keys
-      const d = data as { mids?: Record<string, string> };
-      const keys = d.mids ? Object.keys(d.mids) : [];
-      const isXyz = keys.some((k) => k.startsWith("xyz:"));
-      const subKey = isXyz ? "allMids:xyz" : "allMids";
-      const keyed = this.subscriptions.get(subKey);
-      if (keyed) {
-        for (const handler of keyed.handlers) handler(data);
+    } else {
+      // Generic exact channel match for any other channels
+      const sub = this.subscriptions.get(channel);
+      if (sub) {
+        for (const handler of sub.handlers) handler(data);
       }
     }
   }

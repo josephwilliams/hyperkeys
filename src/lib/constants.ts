@@ -4,10 +4,10 @@ export const API_URL = "https://api.hyperliquid.xyz/info";
 export const WS_URL = "wss://api.hyperliquid.xyz/ws";
 
 export const MARKETS: Market[] = [
-  { coin: "BTC", label: "BTC-PERP", szDecimals: 5, pxDecimals: 1 },
-  { coin: "ETH", label: "ETH-PERP", szDecimals: 4, pxDecimals: 2 },
-  { coin: "xyz:PLTR", label: "PLTR-PERP", szDecimals: 3, pxDecimals: 2 },
-  { coin: "xyz:GOLD", label: "GOLD-PERP", szDecimals: 4, pxDecimals: 1 },
+  { coin: "BTC", label: "BTC/USD", szDecimals: 5, pxDecimals: 1 },
+  { coin: "ETH", label: "ETH/USD", szDecimals: 4, pxDecimals: 2 },
+  { coin: "xyz:PLTR", label: "PLTR/USD", szDecimals: 3, pxDecimals: 2 },
+  { coin: "xyz:GOLD", label: "GOLD/USD", szDecimals: 4, pxDecimals: 1 },
 ];
 
 // Coins that live on the xyz builder dex (need separate allMids/meta queries)
