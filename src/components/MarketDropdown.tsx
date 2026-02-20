@@ -26,19 +26,14 @@ export default function MarketDropdown({
     <div className={className} ref={ref}>
       {renderTrigger(() => setOpen((v) => !v))}
       {open && (
-        <div
-          className="absolute top-full left-0 mt-1 rounded z-50 overflow-hidden"
-          style={{ background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
-        >
+        <div className="absolute top-full left-0 mt-1 rounded z-50 overflow-hidden bg-panel border border-edge">
           {MARKETS.map((m) => (
             <button
               key={m.coin}
               onClick={() => { setSelectedCoin(m.coin); setOpen(false); }}
-              className={`block w-full text-left whitespace-nowrap ${itemClassName}`}
-              style={{
-                color: m.coin === selectedCoin ? "var(--text-primary)" : "var(--text-secondary)",
-                background: m.coin === selectedCoin ? "var(--bg-tertiary)" : "transparent",
-              }}
+              className={`block w-full text-left whitespace-nowrap ${itemClassName} ${
+                m.coin === selectedCoin ? "text-fg bg-elevated" : "text-subtle bg-transparent"
+              }`}
             >
               {m.label}
             </button>

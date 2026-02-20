@@ -3,7 +3,7 @@
 import { useState, useCallback } from "react";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useTradingStore } from "@/stores/tradingStore";
-import { MARKETS, SIZE_INCREMENTS } from "@/lib/constants";
+import { MARKETS_MAP, SIZE_INCREMENTS } from "@/lib/constants";
 import { formatUsd, formatSize } from "@/lib/format";
 
 export default function TradingPanel() {
@@ -20,7 +20,7 @@ export default function TradingPanel() {
   const executeOrder = useTradingStore((s) => s.executeOrder);
 
   const { mids, midsRef } = useAllMids();
-  const market = MARKETS.find((m) => m.coin === selectedCoin)!;
+  const market = MARKETS_MAP[selectedCoin];
   const midPrice = mids[selectedCoin] ? parseFloat(mids[selectedCoin]) : 0;
 
   const sizeBase = midPrice > 0 ? orderSizeUsd / midPrice : 0;
@@ -30,8 +30,6 @@ export default function TradingPanel() {
       : `${formatSize(sizeBase, market.szDecimals)} ${selectedCoin}`;
 
   const isLong = side === "long";
-  const sideColor = isLong ? "var(--green)" : "var(--red)";
-  const sideBg = isLong ? "var(--green-dim)" : "var(--red-dim)";
 
   // Execution flash feedback
   const [flashKey, setFlashKey] = useState(0);
@@ -46,16 +44,19 @@ export default function TradingPanel() {
   return (
     <div className="flex flex-col gap-2.5 !px-4 !py-3.5">
       {/* Balance */}
-      <div className="flex items-center justify-between text-[10px]" style={{ color: "var(--text-muted)" }}>
+      <div className="flex items-center justify-between text-[10px] text-muted">
         <span>Balance</span>
-        <span style={{ color: "var(--text-secondary)" }}>{formatUsd(balance)}</span>
+        <span className="text-subtle">{formatUsd(balance)}</span>
       </div>
 
       {/* Side toggle */}
       <button
         onClick={toggleSide}
-        className="w-full py-2 rounded text-xs font-bold uppercase tracking-wider transition-colors"
-        style={{ background: sideBg, color: sideColor, border: `1px solid ${sideColor}33` }}
+        className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider transition-colors border ${
+          isLong
+            ? "bg-green-dim text-green border-green/20"
+            : "bg-red-dim text-red border-red/20"
+        }`}
       >
         {side} {selectedCoin}
       </button>
@@ -64,18 +65,16 @@ export default function TradingPanel() {
       <div className="flex items-center justify-between gap-1">
         <button
           onClick={decreaseSize}
-          className="px-2 py-1 rounded text-xs"
-          style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}
+          className="px-2 py-1 rounded text-xs bg-elevated text-subtle"
         >
           −
         </button>
-        <div className="flex-1 text-center text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
+        <div className="flex-1 text-center text-sm font-semibold text-fg">
           {displaySize}
         </div>
         <button
           onClick={increaseSize}
-          className="px-2 py-1 rounded text-xs"
-          style={{ background: "var(--bg-tertiary)", color: "var(--text-secondary)" }}
+          className="px-2 py-1 rounded text-xs bg-elevated text-subtle"
         >
           +
         </button>
@@ -84,8 +83,7 @@ export default function TradingPanel() {
       {/* Increment */}
       <button
         onClick={cycleSizeIncrement}
-        className="text-[10px] text-center py-1 rounded"
-        style={{ background: "var(--bg-tertiary)", color: "var(--text-muted)" }}
+        className="text-[10px] text-center py-1 rounded bg-elevated text-muted"
       >
         Step: {formatUsd(SIZE_INCREMENTS[sizeIncrementIndex])}
       </button>
@@ -94,8 +92,9 @@ export default function TradingPanel() {
       <button
         key={flashKey}
         onClick={handleExecute}
-        className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider ${flashKey > 0 ? "exec-flash" : ""}`}
-        style={{ background: sideColor, color: "#fff" }}
+        className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider text-white ${
+          isLong ? "bg-green" : "bg-red"
+        } ${flashKey > 0 ? "exec-flash" : ""}`}
       >
         {side === "long" ? "Buy" : "Sell"} / Enter ↵
       </button>

@@ -16,10 +16,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
   loading: () => (
-    <div
-      className="flex items-center justify-center h-full"
-      style={{ color: "var(--text-muted)" }}
-    >
+    <div className="flex items-center justify-center h-full text-muted">
       Loading chart…
     </div>
   ),
@@ -33,7 +30,7 @@ export default function TradingPage() {
 
   return (
     <ErrorBoundary>
-    <div className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
+    <div className="h-screen flex flex-col bg-surface">
       {/* Market header */}
       <MarketHeader />
 
@@ -46,10 +43,7 @@ export default function TradingPage() {
 
       {/* Mobile orderbook (hidden on md+) */}
       {mobileOrderbook && (
-        <div
-          className="md:hidden border-b overflow-hidden"
-          style={{ borderColor: "var(--border)", background: "var(--bg-secondary)", height: "240px" }}
-        >
+        <div className="md:hidden border-b border-edge overflow-hidden bg-panel h-[240px]">
           <Orderbook />
         </div>
       )}
@@ -57,31 +51,22 @@ export default function TradingPage() {
       {/* Main grid */}
       <div className="flex-1 grid grid-cols-1 md:grid-cols-[1fr_280px] grid-rows-[1fr_180px] overflow-hidden min-h-0">
         {/* Chart area */}
-        <div
-          className="border-r border-b min-h-0 overflow-hidden"
-          style={{ borderColor: "var(--border)", background: "var(--bg-primary)" }}
-        >
+        <div className="border-r border-b border-edge min-h-0 overflow-hidden bg-surface">
           <CandleChart />
         </div>
 
         {/* Orderbook + Trading Panel */}
-        <div
-          className="border-b flex-col hidden md:flex min-h-0 overflow-hidden"
-          style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}
-        >
+        <div className="border-b border-edge flex-col hidden md:flex min-h-0 overflow-hidden bg-panel">
           <div className="flex-1 min-h-0 overflow-hidden">
             <Orderbook />
           </div>
-          <div className="border-t" style={{ borderColor: "var(--border)" }}>
+          <div className="border-t border-edge">
             <TradingPanel />
           </div>
         </div>
 
         {/* Positions table */}
-        <div
-          className="col-span-1 md:col-span-2 min-h-0 overflow-hidden"
-          style={{ background: "var(--bg-secondary)" }}
-        >
+        <div className="col-span-1 md:col-span-2 min-h-0 overflow-hidden bg-panel">
           <PositionsTable />
         </div>
       </div>

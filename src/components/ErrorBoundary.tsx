@@ -19,17 +19,13 @@ export default class ErrorBoundary extends React.Component<
   render() {
     if (this.state.hasError) {
       return (
-        <div
-          className="h-screen flex flex-col items-center justify-center gap-4"
-          style={{ background: "var(--bg-primary)", color: "var(--text-secondary)" }}
-        >
-          <p className="text-lg font-semibold" style={{ color: "var(--text-primary)" }}>
+        <div className="h-screen flex flex-col items-center justify-center gap-4 bg-surface text-subtle">
+          <p className="text-lg font-semibold text-fg">
             Oops, something went wrong
           </p>
           <button
             onClick={() => this.setState({ hasError: false })}
-            className="px-4 py-2 rounded text-sm"
-            style={{ background: "var(--bg-tertiary)", border: "1px solid var(--border)" }}
+            className="px-4 py-2 rounded text-sm bg-elevated border border-edge"
           >
             Try again
           </button>

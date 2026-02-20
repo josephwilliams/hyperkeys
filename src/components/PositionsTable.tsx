@@ -19,21 +19,18 @@ export default function PositionsTable() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header bar */}
-      <div
-        className="flex items-center justify-between !px-6 !py-2 text-[10px] uppercase tracking-wider border-b"
-        style={{ color: "var(--text-muted)", borderColor: "var(--border)" }}
-      >
+      <div className="flex items-center justify-between !px-6 !py-2 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
         <span>Positions ({positions.length})</span>
         <div className="flex gap-4">
           <span>
             uPnL:{" "}
-            <span style={{ color: totalUPnl >= 0 ? "var(--green)" : "var(--red)" }}>
+            <span className={totalUPnl >= 0 ? "text-green" : "text-red"}>
               {totalUPnl >= 0 ? "+" : ""}{formatUsd(totalUPnl)}
             </span>
           </span>
           <span>
             Equity:{" "}
-            <span style={{ color: "var(--text-secondary)" }}>
+            <span className="text-subtle">
               {formatUsd(balance + totalUPnl)}
             </span>
           </span>
@@ -41,20 +38,14 @@ export default function PositionsTable() {
       </div>
 
       {positions.length === 0 ? (
-        <div
-          className="flex-1 flex items-center justify-center text-xs"
-          style={{ color: "var(--text-muted)" }}
-        >
+        <div className="flex-1 flex items-center justify-center text-xs text-muted">
           No open positions — press Enter to trade
         </div>
       ) : (
         <div className="flex-1 overflow-auto !px-2">
           <table className="w-full">
             <thead>
-              <tr
-                className="text-[10px] uppercase tracking-wider"
-                style={{ color: "var(--text-muted)", borderBottom: "1px solid var(--border)" }}
-              >
+              <tr className="text-[10px] uppercase tracking-wider text-muted border-b border-edge">
                 <th className="px-5 py-1.5 text-left font-normal">Market</th>
                 <th className="px-5 py-1.5 text-left font-normal">Side</th>
                 <th className="px-5 py-1.5 text-left font-normal">Size</th>

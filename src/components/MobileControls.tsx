@@ -18,12 +18,6 @@ export default function MobileControls({ onExecute, showOrderbook, onToggleOrder
   const toggleDenomination = useTradingStore((s) => s.toggleDenomination);
   const cycleCandleInterval = useTradingStore((s) => s.cycleCandleInterval);
 
-  const btnStyle = {
-    background: "var(--bg-tertiary)",
-    color: "var(--text-secondary)",
-    border: "1px solid var(--border)",
-  };
-
   return (
     <div className="flex items-center gap-1 !px-6 !py-1 md:hidden overflow-x-auto">
       <MarketDropdown
@@ -32,8 +26,7 @@ export default function MobileControls({ onExecute, showOrderbook, onToggleOrder
         renderTrigger={(toggle) => (
           <button
             onClick={toggle}
-            className="px-2 py-1 rounded text-[10px] shrink-0"
-            style={btnStyle}
+            className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
           >
             {selectedCoin} ▾
           </button>
@@ -41,46 +34,35 @@ export default function MobileControls({ onExecute, showOrderbook, onToggleOrder
       />
       <button
         onClick={toggleSide}
-        className="px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0"
-        style={{
-          ...btnStyle,
-          color: side === "long" ? "var(--green)" : "var(--red)",
-        }}
+        className={`px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 bg-elevated border border-edge ${
+          side === "long" ? "text-green" : "text-red"
+        }`}
       >
         {side}
       </button>
       <button
         onClick={cycleCandleInterval}
-        className="px-2 py-1 rounded text-[10px] shrink-0"
-        style={btnStyle}
+        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
       >
         {candleInterval}
       </button>
       <button
         onClick={toggleDenomination}
-        className="px-2 py-1 rounded text-[10px] shrink-0"
-        style={btnStyle}
+        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
       >
         {denomination}
       </button>
       <button
         onClick={onToggleOrderbook}
-        className="px-2 py-1 rounded text-[10px] shrink-0"
-        style={{
-          ...btnStyle,
-          background: showOrderbook ? "var(--bg-tertiary)" : btnStyle.background,
-          color: btnStyle.color,
-        }}
+        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
       >
         Book {showOrderbook ? "▴" : "▾"}
       </button>
       <button
         onClick={onExecute}
-        className="px-3 py-1 rounded text-[10px] font-bold shrink-0"
-        style={{
-          background: side === "long" ? "var(--green)" : "var(--red)",
-          color: "#fff",
-        }}
+        className={`px-3 py-1 rounded text-[10px] font-bold shrink-0 text-white ${
+          side === "long" ? "bg-green" : "bg-red"
+        }`}
       >
         Execute
       </button>

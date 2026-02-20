@@ -50,50 +50,40 @@ export default function MarketHeader() {
     : null;
 
   return (
-    <div
-      className="border-b select-none"
-      style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}
-    >
+    <div className="border-b border-edge select-none bg-panel">
       {/* Top row: market info + theme toggle */}
       <div className="h-12 flex items-center justify-between">
         {/* Market info */}
         <div className="flex items-center gap-6 !px-6">
           <MarketDropdown
             renderTrigger={(toggle) => (
-              <button
-                onClick={toggle}
-                className="font-bold text-sm"
-                style={{ color: "var(--text-primary)" }}
-              >
-                {market.label} <span className="text-sm" style={{ color: "var(--text-muted)" }}>▾</span>
+              <button onClick={toggle} className="font-bold text-sm text-fg">
+                {market.label} <span className="text-sm text-muted">▾</span>
               </button>
             )}
           />
 
           {midPrice !== null ? (
-            <span className={`text-sm font-semibold ${flashClass}`} style={{ color: "var(--text-primary)" }}>
+            <span className={`text-sm font-semibold text-fg ${flashClass}`}>
               ${formatPrice(midPrice, market.pxDecimals)}
             </span>
           ) : (
-            <span className="text-xs" style={{ color: "var(--text-muted)" }}>Loading…</span>
+            <span className="text-xs text-muted">Loading…</span>
           )}
 
           {change24h && (
-            <span
-              className="text-xs"
-              style={{ color: isPositive ? "var(--green)" : "var(--red)" }}
-            >
-              <span style={{ color: "var(--text-muted)" }}>24h</span> {change24h}
+            <span className={`text-xs ${isPositive ? "text-green" : "text-red"}`}>
+              <span className="text-muted">24h</span> {change24h}
             </span>
           )}
 
           {/* Funding + OI: visible on desktop, hidden on mobile */}
           {ctx && (
             <>
-              <span className="text-xs hidden md:inline" style={{ color: "var(--text-secondary)" }}>
+              <span className="text-xs hidden md:inline text-subtle">
                 Funding: {fundingStr}
               </span>
-              <span className="text-xs hidden md:inline" style={{ color: "var(--text-secondary)" }}>
+              <span className="text-xs hidden md:inline text-subtle">
                 OI: {oiStr}
               </span>
             </>
@@ -104,8 +94,7 @@ export default function MarketHeader() {
         <div className="!px-6">
           <button
             onClick={toggleTheme}
-            className="p-1.5 rounded"
-            style={{ color: "var(--text-secondary)" }}
+            className="p-1.5 rounded text-subtle"
             title="Toggle theme (T)"
           >
             {theme === "dark" ? (
@@ -123,14 +112,11 @@ export default function MarketHeader() {
 
       {/* Second row: Funding + OI on mobile only */}
       {ctx && (
-        <div
-          className="flex items-center gap-4 !px-6 !py-1.5 border-t md:hidden"
-          style={{ borderColor: "var(--border)" }}
-        >
-          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+        <div className="flex items-center gap-4 !px-6 !py-1.5 border-t border-edge md:hidden">
+          <span className="text-xs text-subtle">
             Funding: {fundingStr}
           </span>
-          <span className="text-xs" style={{ color: "var(--text-secondary)" }}>
+          <span className="text-xs text-subtle">
             OI: {oiStr}
           </span>
         </div>

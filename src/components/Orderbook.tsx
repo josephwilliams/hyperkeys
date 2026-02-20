@@ -56,16 +56,13 @@ export default function Orderbook() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header */}
-      <div
-        className="flex items-center justify-between !px-4 !py-1.5 text-[10px] uppercase tracking-wider border-b"
-        style={{ color: "var(--text-muted)", borderColor: "var(--border)" }}
-      >
+      <div className="flex items-center justify-between !px-4 !py-1.5 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
         <span>Price</span>
         <span>{denomination === "USD" ? "Size (USD)" : `Size (${selectedCoin})`}</span>
       </div>
 
       {isLoading && bids.length === 0 ? (
-        <div className="flex-1 flex items-center justify-center text-xs" style={{ color: "var(--text-muted)" }}>
+        <div className="flex-1 flex items-center justify-center text-xs text-muted">
           Loading orderbook…
         </div>
       ) : null}
@@ -84,10 +81,7 @@ export default function Orderbook() {
       </div>
 
       {/* Spread / mid price */}
-      <div
-        className="flex items-center justify-center py-1 text-xs font-semibold border-y"
-        style={{ borderColor: "var(--border)", color: "var(--text-primary)" }}
-      >
+      <div className="flex items-center justify-center py-1 text-xs font-semibold border-y border-edge text-fg">
         {midPrice !== null ? formatPrice(midPrice, market.pxDecimals) : "—"}
       </div>
 
