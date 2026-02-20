@@ -2,6 +2,7 @@
 
 import dynamic from "next/dynamic";
 import MarketHeader from "@/components/MarketHeader";
+import Orderbook from "@/components/Orderbook";
 
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
@@ -36,8 +37,8 @@ export default function TradingPage() {
           className="border-b flex-col hidden md:flex min-h-0 overflow-hidden"
           style={{ borderColor: "var(--border)", background: "var(--bg-secondary)" }}
         >
-          <div className="flex-1 min-h-0 overflow-hidden flex items-center justify-center" style={{ color: "var(--text-muted)" }}>
-            Orderbook
+          <div className="flex-1 min-h-0 overflow-hidden">
+            <Orderbook />
           </div>
           <div
             className="border-t flex items-center justify-center p-4"
