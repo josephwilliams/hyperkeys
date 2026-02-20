@@ -11,6 +11,7 @@ import TradingPanel from "@/components/TradingPanel";
 import PositionsTable from "@/components/PositionsTable";
 import KeyboardHints from "@/components/KeyboardHints";
 import MobileControls from "@/components/MobileControls";
+import ErrorBoundary from "@/components/ErrorBoundary";
 
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
@@ -31,6 +32,7 @@ export default function TradingPage() {
   useKeyboard(midsRef);
 
   return (
+    <ErrorBoundary>
     <div className="h-screen flex flex-col" style={{ background: "var(--bg-primary)" }}>
       {/* Market header */}
       <MarketHeader />
@@ -87,5 +89,6 @@ export default function TradingPage() {
       {/* Keyboard hints bar */}
       <KeyboardHints />
     </div>
+    </ErrorBoundary>
   );
 }
