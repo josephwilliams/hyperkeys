@@ -107,6 +107,12 @@ function CandleChartInner() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedCoin, candleInterval]);
 
+  // Resize chart when container size changes
+  useEffect(() => {
+    if (!chartRef.current || width === 0 || height === 0) return;
+    chartRef.current.applyOptions({ width, height });
+  }, [width, height]);
+
   // Update chart colors on theme change without recreating
   useEffect(() => {
     if (!chartRef.current) return;

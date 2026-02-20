@@ -21,7 +21,7 @@ const PositionRow = React.memo(function PositionRow({
   return (
     <tr className="text-xs border-b border-edge">
       <td className="px-5 py-2.5 font-semibold text-fg">
-        {position.coin}
+        {market?.label ?? position.coin}
       </td>
       <td
         className={`px-5 py-2.5 uppercase font-bold text-[10px] ${
