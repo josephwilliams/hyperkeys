@@ -1,5 +1,20 @@
 @import "tailwindcss";
 
+@theme {
+  --color-surface: var(--bg-primary);
+  --color-panel: var(--bg-secondary);
+  --color-elevated: var(--bg-tertiary);
+  --color-fg: var(--text-primary);
+  --color-subtle: var(--text-secondary);
+  --color-muted: var(--text-muted);
+  --color-edge: var(--border);
+  --color-green: var(--green);
+  --color-green-dim: var(--green-dim);
+  --color-red: var(--red);
+  --color-red-dim: var(--red-dim);
+  --color-accent: var(--accent);
+}
+
 /* Dark theme (default) */
 :root,
 .dark {
