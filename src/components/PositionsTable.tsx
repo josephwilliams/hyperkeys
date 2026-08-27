@@ -19,7 +19,7 @@ export default function PositionsTable() {
   return (
     <div className="flex flex-col h-full overflow-hidden">
       {/* Header bar */}
-      <div className="flex items-center justify-between !px-6 !py-2 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
+      <div className="flex items-center justify-between px-6 py-2 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
         <span>Positions ({positions.length})</span>
         <div className="flex gap-4">
           <span>
@@ -42,7 +42,7 @@ export default function PositionsTable() {
           No open positions — press Enter to trade
         </div>
       ) : (
-        <div className="flex-1 overflow-auto !px-2">
+        <div className="flex-1 overflow-auto px-2">
           <table className="w-full">
             <thead>
               <tr className="text-[10px] uppercase tracking-wider text-muted border-b border-edge">

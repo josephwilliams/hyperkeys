@@ -1,43 +1,90 @@
-import { WS_URL, CANDLE_INTERVALS } from "./constants";
+import { WS_URL, XYZ_DEX, XYZ_PREFIX } from "./constants";
+import type { CandleInterval } from "@/types/trading";
 
 type MessageHandler = (data: unknown) => void;
 
+/**
+ * A subscription target: `key` identifies it locally (for routing and
+ * de-duplication), `payload` is what Hyperliquid expects on the wire.
+ */
+export interface WsChannel {
+  key: string;
+  payload: Record<string, string>;
+}
+
+export const wsChannels = {
+  allMids: (dex?: string): WsChannel => ({
+    key: dex ? `allMids:${dex}` : "allMids",
+    payload: dex ? { type: "allMids", dex } : { type: "allMids" },
+  }),
+  l2Book: (coin: string): WsChannel => ({
+    key: `l2Book:${coin}`,
+    payload: { type: "l2Book", coin },
+  }),
+  candle: (coin: string, interval: CandleInterval): WsChannel => ({
+    key: `candle:${coin}:${interval}`,
+    payload: { type: "candle", coin, interval },
+  }),
+};
+
 interface Subscription {
-  refCount: number;
+  payload: Record<string, string>;
   handlers: Set<MessageHandler>;
 }
+
+const INITIAL_RECONNECT_DELAY_MS = 1000;
+const MAX_RECONNECT_DELAY_MS = 30_000;
 
 class HyperliquidWs {
   private ws: WebSocket | null = null;
   private subscriptions = new Map<string, Subscription>();
   private reconnectAttempt = 0;
-  private maxReconnectDelay = 30_000;
   private reconnectTimer: ReturnType<typeof setTimeout> | null = null;
   private isConnecting = false;
 
-  connect() {
+  subscribe(channel: WsChannel, handler: MessageHandler) {
+    let sub = this.subscriptions.get(channel.key);
+    if (!sub) {
+      sub = { payload: channel.payload, handlers: new Set() };
+      this.subscriptions.set(channel.key, sub);
+      this.connect();
+      this.send("subscribe", sub.payload);
+    }
+    sub.handlers.add(handler);
+  }
+
+  unsubscribe(channel: WsChannel, handler: MessageHandler) {
+    const sub = this.subscriptions.get(channel.key);
+    if (!sub) return;
+    sub.handlers.delete(handler);
+    if (sub.handlers.size === 0) {
+      this.send("unsubscribe", sub.payload);
+      this.subscriptions.delete(channel.key);
+    }
+  }
+
+  private connect() {
     if (this.ws?.readyState === WebSocket.OPEN || this.isConnecting) return;
     this.isConnecting = true;
-
     this.ws = new WebSocket(WS_URL);
 
     this.ws.onopen = () => {
       this.isConnecting = false;
       this.reconnectAttempt = 0;
-      // Resubscribe all active subscriptions
-      for (const key of this.subscriptions.keys()) {
-        this.sendSubscribe(key);
+      for (const sub of this.subscriptions.values()) {
+        this.send("subscribe", sub.payload);
       }
     };
 
     this.ws.onmessage = (event) => {
+      let msg: { channel?: string; data?: unknown };
       try {
-        const msg = JSON.parse(event.data);
-        if (msg.channel && msg.data) {
-          this.routeMessage(msg.channel, msg.data);
-        }
+        msg = JSON.parse(event.data);
       } catch {
-        // ignore malformed messages
+        return; // ignore malformed frames
+      }
+      if (msg.channel && msg.data !== undefined) {
+        this.emit(msg.channel, msg.data);
       }
     };
 
@@ -46,16 +93,14 @@ class HyperliquidWs {
       this.scheduleReconnect();
     };
 
-    this.ws.onerror = () => {
-      this.ws?.close();
-    };
+    this.ws.onerror = () => this.ws?.close();
   }
 
   private scheduleReconnect() {
     if (this.reconnectTimer) return;
     const delay = Math.min(
-      1000 * Math.pow(2, this.reconnectAttempt),
-      this.maxReconnectDelay
+      INITIAL_RECONNECT_DELAY_MS * 2 ** this.reconnectAttempt,
+      MAX_RECONNECT_DELAY_MS
     );
     this.reconnectAttempt++;
     this.reconnectTimer = setTimeout(() => {
@@ -64,117 +109,41 @@ class HyperliquidWs {
     }, delay);
   }
 
-  private routeMessage(channel: string, data: unknown) {
-    if (channel === "allMids") {
-      // Determine if this is default or xyz dex by checking for xyz: prefixed keys
-      const d = data as { mids?: Record<string, string> };
-      const keys = d.mids ? Object.keys(d.mids) : [];
-      const isXyz = keys.some((k) => k.startsWith("xyz:"));
-      const subKey = isXyz ? "allMids:xyz" : "allMids";
-      const keyed = this.subscriptions.get(subKey);
-      if (keyed) {
-        for (const handler of keyed.handlers) handler(data);
-      }
-    } else if (channel === "l2Book") {
-      const d = data as { coin?: string };
-      if (d.coin) {
-        const keyed = this.subscriptions.get(`l2Book:${d.coin}`);
-        if (keyed) {
-          for (const handler of keyed.handlers) handler(data);
-        }
-      }
-    } else if (channel === "candle") {
-      const d = data as { s?: string; i?: string };
-      if (d.s && d.i) {
-        const keyed = this.subscriptions.get(`candle:${d.s}:${d.i}`);
-        if (keyed) {
-          for (const handler of keyed.handlers) handler(data);
-        }
-      }
-    } else {
-      // Generic exact channel match for any other channels
-      const sub = this.subscriptions.get(channel);
-      if (sub) {
-        for (const handler of sub.handlers) handler(data);
-      }
-    }
-  }
-
-  private sendSubscribe(key: string) {
+  private send(method: "subscribe" | "unsubscribe", subscription: Record<string, string>) {
     if (this.ws?.readyState !== WebSocket.OPEN) return;
-    const msg = this.keyToSubscription(key);
-    if (msg) {
-      this.ws.send(JSON.stringify({ method: "subscribe", subscription: msg }));
-    }
+    this.ws.send(JSON.stringify({ method, subscription }));
   }
 
-  private sendUnsubscribe(key: string) {
-    if (this.ws?.readyState !== WebSocket.OPEN) return;
-    const msg = this.keyToSubscription(key);
-    if (msg) {
-      this.ws.send(JSON.stringify({ method: "unsubscribe", subscription: msg }));
-    }
-  }
-
-  private keyToSubscription(key: string): Record<string, string> | null {
-    if (key === "allMids") {
-      return { type: "allMids" };
-    }
-    if (key === "allMids:xyz") {
-      return { type: "allMids", dex: "xyz" };
-    }
-    if (key.startsWith("l2Book:")) {
-      const coin = key.slice("l2Book:".length);
-      return { type: "l2Book", coin };
-    }
-    if (key.startsWith("candle:")) {
-      const parts = key.split(":");
-      // Handle coins like "xyz:PLTR" — key is "candle:xyz:PLTR:1h"
-      // Find interval (last segment that matches interval pattern)
-      const interval = parts[parts.length - 1];
-      const coin = parts.slice(1, -1).join(":");
-      if (CANDLE_INTERVALS.includes(interval as typeof CANDLE_INTERVALS[number])) {
-        return { type: "candle", coin, interval };
-      }
-      return null;
-    }
-    return null;
-  }
-
-  subscribe(key: string, handler: MessageHandler) {
-    let sub = this.subscriptions.get(key);
-    if (!sub) {
-      sub = { refCount: 0, handlers: new Set() };
-      this.subscriptions.set(key, sub);
-    }
-    sub.refCount++;
-    sub.handlers.add(handler);
-
-    if (sub.refCount === 1) {
-      this.connect();
-      this.sendSubscribe(key);
-    }
-  }
-
-  unsubscribe(key: string, handler: MessageHandler) {
-    const sub = this.subscriptions.get(key);
+  private emit(channel: string, data: unknown) {
+    const key = this.routeKey(channel, data);
+    const sub = key ? this.subscriptions.get(key) : undefined;
     if (!sub) return;
-    sub.refCount--;
-    sub.handlers.delete(handler);
+    for (const handler of sub.handlers) handler(data);
+  }
 
-    if (sub.refCount <= 0) {
-      this.sendUnsubscribe(key);
-      this.subscriptions.delete(key);
+  /** Maps an inbound message back to the key of the subscription that wants it. */
+  private routeKey(channel: string, data: unknown): string | null {
+    if (channel === "allMids") {
+      // Both dexes publish on one channel; only the xyz feed is namespaced.
+      const { mids } = data as { mids?: Record<string, string> };
+      const isXyz = Object.keys(mids ?? {}).some((c) => c.startsWith(XYZ_PREFIX));
+      return wsChannels.allMids(isXyz ? XYZ_DEX : undefined).key;
     }
+    if (channel === "l2Book") {
+      const { coin } = data as { coin?: string };
+      return coin ? wsChannels.l2Book(coin).key : null;
+    }
+    if (channel === "candle") {
+      const { s: coin, i: interval } = data as { s?: string; i?: CandleInterval };
+      return coin && interval ? wsChannels.candle(coin, interval).key : null;
+    }
+    return channel;
   }
 }
 
-// Singleton
 let instance: HyperliquidWs | null = null;
 
 export function getWs(): HyperliquidWs {
-  if (!instance) {
-    instance = new HyperliquidWs();
-  }
+  if (!instance) instance = new HyperliquidWs();
   return instance;
 }

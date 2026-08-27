@@ -15,6 +15,14 @@ import type { AllMids } from "@/types/api";
 
 type Theme = "dark" | "light";
 
+const THEMES: Theme[] = ["dark", "light"];
+
+function applyTheme(theme: Theme) {
+  const root = document.documentElement;
+  root.classList.remove(...THEMES);
+  root.classList.add(theme);
+}
+
 interface TradingState {
   // Market selection
   selectedCoin: string;
@@ -57,7 +65,7 @@ export const useTradingStore = create<TradingState>((set, get) => ({
   sizeIncrementIndex: DEFAULT_SIZE_INCREMENT_INDEX,
   balance: STARTING_BALANCE,
   positions: [],
-  theme: "dark" as Theme,
+  theme: "dark",
 
   setSelectedCoin: (coin) => set({ selectedCoin: coin }),
 
@@ -105,14 +113,15 @@ export const useTradingStore = create<TradingState>((set, get) => ({
   },
 
   toggleTheme: () => {
-    const next = get().theme === "dark" ? "light" : "dark";
-    document.documentElement.className = next;
+    const next: Theme = get().theme === "dark" ? "light" : "dark";
+    applyTheme(next);
     set({ theme: next });
   },
 
   syncTheme: () => {
-    const cls = document.documentElement.className as Theme;
-    if (cls === "light" || cls === "dark") set({ theme: cls });
+    const root = document.documentElement;
+    const theme = THEMES.find((t) => root.classList.contains(t));
+    if (theme) set({ theme });
   },
 
   executeOrder: (midsRef) => {

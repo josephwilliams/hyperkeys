@@ -1,4 +1,4 @@
-import { API_URL } from "./constants";
+import { API_URL, CANDLE_HISTORY_MS, ORDERBOOK_SIG_FIGS } from "./constants";
 import type {
   CandleData,
   L2BookSnapshot,
@@ -13,25 +13,23 @@ async function postInfo<T>(body: Record<string, unknown>): Promise<T> {
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify(body),
   });
-  if (!res.ok) throw new Error(`API error: ${res.status}`);
+  if (!res.ok) throw new Error(`Hyperliquid ${body.type} failed: ${res.status}`);
   return res.json() as Promise<T>;
+}
+
+/** `dex` is omitted for the default perp dex and set to "xyz" for the builder dex. */
+function withDex(body: Record<string, unknown>, dex?: string) {
+  return dex ? { ...body, dex } : body;
 }
 
 export async function fetchCandles(
   coin: string,
-  interval: CandleInterval,
-  startTime?: number,
-  endTime?: number
+  interval: CandleInterval
 ): Promise<CandleData[]> {
-  const now = Date.now();
+  const endTime = Date.now();
   return postInfo<CandleData[]>({
     type: "candleSnapshot",
-    req: {
-      coin,
-      interval,
-      startTime: startTime ?? now - 7 * 24 * 60 * 60 * 1000,
-      endTime: endTime ?? now,
-    },
+    req: { coin, interval, startTime: endTime - CANDLE_HISTORY_MS, endTime },
   });
 }
 
@@ -39,21 +37,20 @@ export async function fetchL2Book(coin: string): Promise<L2BookSnapshot> {
   return postInfo<L2BookSnapshot>({
     type: "l2Book",
     coin,
-    nSigFigs: 5,
+    nSigFigs: ORDERBOOK_SIG_FIGS,
   });
 }
 
 export async function fetchAllMids(dex?: string): Promise<AllMids> {
-  return postInfo<AllMids>({
-    type: "allMids",
-    ...(dex ? { dex } : {}),
-  });
+  return postInfo<AllMids>(withDex({ type: "allMids" }, dex));
 }
 
-export async function fetchMetaAndAssetCtxs(dex?: string): Promise<MetaAndAssetCtxs> {
-  const raw = await postInfo<[MetaAndAssetCtxs["meta"], MetaAndAssetCtxs["assetCtxs"]]>({
-    type: "metaAndAssetCtxs",
-    ...(dex ? { dex } : {}),
-  });
-  return { meta: raw[0], assetCtxs: raw[1] };
+export async function fetchMetaAndAssetCtxs(
+  dex?: string
+): Promise<MetaAndAssetCtxs> {
+  // The API returns a positional [meta, assetCtxs] pair rather than an object.
+  const [meta, assetCtxs] = await postInfo<
+    [MetaAndAssetCtxs["meta"], MetaAndAssetCtxs["assetCtxs"]]
+  >(withDex({ type: "metaAndAssetCtxs" }, dex));
+  return { meta, assetCtxs };
 }

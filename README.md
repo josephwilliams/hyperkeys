@@ -1,26 +1,24 @@
 # Hyperkeys
 
-A keyboard-native perpetual futures trading interface built on top of the Hyperliquid API. Real-time market data, an interactive orderbook, candlestick charting, and simulated order execution — all driven primarily by keyboard shortcuts.
+A keyboard-native perpetual futures trading interface built on the Hyperliquid API. Live market data, a depth-weighted orderbook, candlestick charting, and simulated order execution — all driven primarily from the keyboard.
 
-## Tech Stack
+![Trading view](docs/screenshots/trade-dark.png)
 
-- **Next.js 16** with the app router and React 19
-- **Zustand** for global state (single store for market selection, order params, positions, theme)
-- **TanStack React Query** for data fetching with `staleTime: Infinity` — initial loads come from REST, then WebSocket pushes keep everything current
-- **Tailwind CSS 4** with CSS custom properties for theming
-- **Lightweight Charts** (TradingView) for candlestick rendering
+## Quick start
 
-## Real-Time Data
+```bash
+npm install
+npm run dev
+```
 
-All market data flows through the Hyperliquid WebSocket (`wss://api.hyperliquid.xyz/ws`):
+Open [localhost:3000](http://localhost:3000). No API keys or accounts are needed — Hyperliquid's market data endpoints are public, and order execution is simulated locally against a $1M paper balance.
 
-- **Mid prices** — streamed for both the default and xyz builder DEX, merged into a single object
-- **L2 orderbook** — 20-level depth, updates on every tick
-- **Candles** — live candle updates across 14 intervals (1m → 1M)
+```bash
+npm run build   # production build
+npm run lint    # eslint
+```
 
-The WebSocket layer is a singleton with automatic reconnection (exponential backoff), reference-counted subscriptions, and channel-based message routing. React Query caches the initial REST snapshot, then `queryClient.setQueryData` patches in WS updates so components stay reactive without polling.
-
-## Keyboard Shortcuts
+## Keyboard shortcuts
 
 | Key | Action |
 |-----|--------|
@@ -33,46 +31,81 @@ The WebSocket layer is a singleton with automatic reconnection (exponential back
 | `I` | Cycle candle interval |
 | `T` | Toggle theme |
 
-Input elements are excluded so typing in fields doesn't trigger shortcuts.
+Keystrokes aimed at text fields or at the browser (`⌘T`, `Ctrl+R`, …) are ignored.
+
+## Screens
+
+### Trading
+
+The main view: market header, chart, orderbook, order entry, and open positions.
+
+![Positions](docs/screenshots/positions.png)
+
+Positions carry unrealized PnL against live mid prices, in dollars and percent of cost basis.
+
+### Market watch
+
+A sortable-at-a-glance overview of every supported market, on the same live feeds. Cells flash green or red as values move.
+
+![Market watch](docs/screenshots/market-watch.png)
+
+### Themes and mobile
+
+Dark and light themes, chosen by time of day on first paint and toggleable with `T`. The layout collapses to a single column with a compact control strip on small screens.
+
+<p>
+  <img src="docs/screenshots/trade-light.png" alt="Light theme" width="58%">
+  <img src="docs/screenshots/mobile.png" alt="Mobile layout" width="20%">
+</p>
 
 ## Markets
 
-Four markets are supported, spanning both the default DEX and the xyz builder DEX:
+Four markets across two Hyperliquid dexes:
 
-- BTC/USD, ETH/USD (default DEX)
-- PLTR/USD, GOLD/USD (xyz DEX — prefixed with `xyz:`)
+- **BTC/USD**, **ETH/USD** — default perp dex
+- **PLTR/USD**, **GOLD/USD** — `xyz` builder dex
 
-Each market has per-asset precision settings for price and size display.
+Assets on the builder dex are namespaced (`xyz:GOLD`) in every API response, so they need their own `allMids` and `metaAndAssetCtxs` queries and their own websocket subscription. Coin ids address the API; the bare symbol is used for display.
 
-## Order Execution
+## Architecture
 
-Orders run against a simulated $1M balance with full position management:
+```
+src/
+  app/          routes: / (trading), /market-watch
+  components/   presentational + container components
+  hooks/        data hooks (react-query + websocket) and DOM hooks
+  lib/          api client, websocket client, formatting, constants
+  stores/       zustand trading store
+  types/        API and domain types
+```
 
-- **Open** a new position (long or short)
-- **Increase** an existing same-side position (weighted average entry)
-- **Reduce** a position partially (realize PnL on the closed portion)
-- **Flip** a position if the opposite-side order exceeds current size
+**Stack** — Next.js 16 (App Router) and React 19, Zustand for trading state, TanStack Query for data, Tailwind CSS 4, and TradingView's Lightweight Charts.
 
-PnL is calculated from live mid prices and displayed per-position and in aggregate.
+### Data flow
 
-## Theming
+Every market feed follows the same shape: React Query holds a REST snapshot, and a websocket subscription patches that cache entry as updates arrive.
 
-Dark and light themes are driven by CSS variables mapped through Tailwind's `@theme` directive. The initial theme is set by time of day (dark outside 7am–7pm) via an inline script that runs before hydration, avoiding any flash. Users can toggle manually with `T`.
+```
+REST snapshot ──► React Query cache ──► components
+                        ▲
+websocket push ─────────┘  (queryClient.setQueryData)
+```
 
-## Layout
+Snapshots use `staleTime: Infinity`, since the socket — not polling — is what keeps them current. Only funding, open interest, and 24h reference prices refetch on an interval, because they aren't streamed.
 
-The UI is a responsive grid:
+The websocket client (`lib/ws.ts`) is a singleton with one connection for the whole app: subscriptions are de-duplicated by key, dropped when their last handler unmounts, replayed after a reconnect, and reconnected with exponential backoff. Channels are declared as `{ key, payload }` descriptors so the local routing key and the wire format stay in one place.
 
-- **Header** — market selector dropdown, live price with flash animation, 24h change, funding rate, open interest, theme toggle
-- **Chart** — responsive candlestick chart that resizes with its container via `ResizeObserver`
-- **Orderbook + order entry** — side-by-side on desktop, toggleable on mobile
-- **Positions table** — all open positions with unrealized PnL, entry/mark prices, and timestamps
-- **Keyboard hints bar** — shortcut reference along the bottom
+### Order execution
 
-## Performance
+Orders fill instantly at the current mid price against a simulated balance:
 
-- `CandleChart` is dynamically imported (code-split)
-- Orderbook and position rows are memoized with `React.memo`
-- A `midsRef` keeps the latest prices available to the order execution path without triggering re-renders
-- Container sizing uses `requestAnimationFrame` throttling
-- Chart theme changes update colors in place without recreating the chart instance
+- **Open** a new position
+- **Increase** a same-side position, blending into a weighted average entry
+- **Reduce** a position, realizing PnL on the closed portion
+- **Flip** when an opposite-side order exceeds the current size
+
+Execution reads prices from a ref rather than component state, so the order path always sees the latest tick without re-rendering on every price update.
+
+## License
+
+[MIT](LICENSE)

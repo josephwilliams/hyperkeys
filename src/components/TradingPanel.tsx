@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useCallback } from "react";
+import { useCallback, useState } from "react";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useTradingStore } from "@/stores/tradingStore";
-import { MARKETS_MAP, SIZE_INCREMENTS } from "@/lib/constants";
-import { formatUsd, formatSize } from "@/lib/format";
+import { baseSymbol, MARKETS_MAP, SIZE_INCREMENTS } from "@/lib/constants";
+import { formatSize, formatUsd, parsePrice } from "@/lib/format";
 
 export default function TradingPanel() {
   const selectedCoin = useTradingStore((s) => s.selectedCoin);
@@ -21,35 +21,33 @@ export default function TradingPanel() {
 
   const { mids, midsRef } = useAllMids();
   const market = MARKETS_MAP[selectedCoin];
-  const midPrice = mids[selectedCoin] ? parseFloat(mids[selectedCoin]) : 0;
+  const symbol = baseSymbol(selectedCoin);
+  const midPrice = parsePrice(mids[selectedCoin]);
 
-  const sizeBase = midPrice > 0 ? orderSizeUsd / midPrice : 0;
   const displaySize =
     denomination === "USD"
       ? formatUsd(orderSizeUsd)
-      : `${formatSize(sizeBase, market.szDecimals)} ${selectedCoin}`;
+      : `${formatSize(midPrice ? orderSizeUsd / midPrice : 0, market.szDecimals)} ${symbol}`;
 
   const isLong = side === "long";
 
-  // Execution flash feedback
-  const [flashKey, setFlashKey] = useState(0);
+  // Remounting the button on a filled order replays its flash animation.
+  const [fillCount, setFillCount] = useState(0);
   const handleExecute = useCallback(() => {
-    const prevBalance = useTradingStore.getState().balance;
+    const balanceBefore = useTradingStore.getState().balance;
     executeOrder(midsRef);
-    if (useTradingStore.getState().balance !== prevBalance) {
-      setFlashKey((k) => k + 1);
+    if (useTradingStore.getState().balance !== balanceBefore) {
+      setFillCount((count) => count + 1);
     }
   }, [executeOrder, midsRef]);
 
   return (
-    <div className="flex flex-col gap-2.5 !px-4 !py-3.5">
-      {/* Balance */}
+    <div className="flex flex-col gap-2.5 px-4 py-3.5">
       <div className="flex items-center justify-between text-[10px] text-muted">
         <span>Balance</span>
         <span className="text-subtle">{formatUsd(balance)}</span>
       </div>
 
-      {/* Side toggle */}
       <button
         onClick={toggleSide}
         className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider transition-colors border ${
@@ -58,13 +56,13 @@ export default function TradingPanel() {
             : "bg-red-dim text-red border-red/20"
         }`}
       >
-        {side} {selectedCoin}
+        {side} {symbol}
       </button>
 
-      {/* Size display */}
       <div className="flex items-center justify-between gap-1">
         <button
           onClick={decreaseSize}
+          aria-label="Decrease size"
           className="px-2 py-1 rounded text-xs bg-elevated text-subtle"
         >
           −
@@ -74,13 +72,13 @@ export default function TradingPanel() {
         </div>
         <button
           onClick={increaseSize}
+          aria-label="Increase size"
           className="px-2 py-1 rounded text-xs bg-elevated text-subtle"
         >
           +
         </button>
       </div>
 
-      {/* Increment */}
       <button
         onClick={cycleSizeIncrement}
         className="text-[10px] text-center py-1 rounded bg-elevated text-muted"
@@ -88,15 +86,14 @@ export default function TradingPanel() {
         Step: {formatUsd(SIZE_INCREMENTS[sizeIncrementIndex])}
       </button>
 
-      {/* Execute */}
       <button
-        key={flashKey}
+        key={fillCount}
         onClick={handleExecute}
         className={`w-full py-2 rounded text-xs font-bold uppercase tracking-wider text-white ${
           isLong ? "bg-green" : "bg-red"
-        } ${flashKey > 0 ? "exec-flash" : ""}`}
+        } ${fillCount > 0 ? "exec-flash" : ""}`}
       >
-        {side === "long" ? "Buy" : "Sell"} / Enter ↵
+        {isLong ? "Buy" : "Sell"} / Enter ↵
       </button>
     </div>
   );

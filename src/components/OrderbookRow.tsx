@@ -18,8 +18,7 @@ const OrderbookRow = React.memo(function OrderbookRow({
   const isBid = side === "bid";
 
   return (
-    <div className="relative flex items-center justify-between !px-4 !py-[2px] text-xs font-mono h-5">
-      {/* Depth bar */}
+    <div className="relative flex items-center justify-between px-4 py-[2px] text-xs font-mono h-5">
       <div
         className={`absolute top-0 bottom-0 right-0 ${isBid ? "bg-green-dim" : "bg-red-dim"}`}
         style={{ width: `${Math.min(depthPercent, 100)}%` }}
@@ -27,9 +26,7 @@ const OrderbookRow = React.memo(function OrderbookRow({
       <span className={`relative z-10 ${isBid ? "text-green" : "text-red"}`}>
         {price}
       </span>
-      <span className="relative z-10 text-subtle">
-        {size}
-      </span>
+      <span className="relative z-10 text-subtle">{size}</span>
     </div>
   );
 });

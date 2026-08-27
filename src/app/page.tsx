@@ -1,17 +1,30 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useState } from "react";
 import dynamic from "next/dynamic";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useKeyboard } from "@/hooks/useKeyboard";
+import { useThemeSync } from "@/hooks/useThemeSync";
 import { useTradingStore } from "@/stores/tradingStore";
 import MarketHeader from "@/components/MarketHeader";
 import Orderbook from "@/components/Orderbook";
 import TradingPanel from "@/components/TradingPanel";
 import PositionsTable from "@/components/PositionsTable";
-import KeyboardHints from "@/components/KeyboardHints";
+import KeyboardHints, { type Hint } from "@/components/KeyboardHints";
+import TradingStatus from "@/components/TradingStatus";
 import MobileControls from "@/components/MobileControls";
 import ErrorBoundary from "@/components/ErrorBoundary";
+
+const HINTS: Hint[] = [
+  { key: "↑↓", label: "Size" },
+  { key: "Enter", label: "Execute" },
+  { key: "Space", label: "Step" },
+  { key: "S", label: "Side" },
+  { key: "Q", label: "Denom" },
+  { key: "M", label: "Market" },
+  { key: "I", label: "Interval" },
+  { key: "T", label: "Theme" },
+];
 
 const CandleChart = dynamic(() => import("@/components/CandleChart"), {
   ssr: false,
@@ -25,15 +38,14 @@ const CandleChart = dynamic(() => import("@/components/CandleChart"), {
 export default function TradingPage() {
   const { midsRef } = useAllMids();
   const executeOrder = useTradingStore((s) => s.executeOrder);
-  const syncTheme = useTradingStore((s) => s.syncTheme);
   const [mobileOrderbook, setMobileOrderbook] = useState(false);
-  useKeyboard(midsRef);
 
-  useEffect(() => { syncTheme(); }, [syncTheme]);
+  useKeyboard(midsRef);
+  useThemeSync();
 
   return (
     <ErrorBoundary>
-    <div className="h-screen flex flex-col bg-surface">
+      <div className="h-screen flex flex-col bg-surface">
       {/* Market header */}
       <MarketHeader />
 
@@ -75,8 +87,10 @@ export default function TradingPage() {
       </div>
 
       {/* Keyboard hints bar */}
-      <KeyboardHints />
-    </div>
+      <KeyboardHints hints={HINTS}>
+        <TradingStatus />
+      </KeyboardHints>
+      </div>
     </ErrorBoundary>
   );
 }

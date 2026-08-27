@@ -1,65 +1,57 @@
 "use client";
 
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { useRef, useCallback, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef } from "react";
 import { fetchAllMids } from "@/lib/api";
-import { useWsSubscription } from "./useWsSubscription";
+import { wsChannels } from "@/lib/ws";
 import { XYZ_DEX } from "@/lib/constants";
+import { useWsSubscription } from "./useWsSubscription";
 import type { AllMids, WsAllMidsData } from "@/types/api";
 
-export function useAllMids() {
+/** REST snapshot for one dex, kept current by that dex's allMids feed. */
+function useDexMids(dex?: string) {
   const queryClient = useQueryClient();
-  const midsRef = useRef<AllMids>({});
+  const queryKey = useMemo(() => (dex ? ["allMids", dex] : ["allMids"]), [dex]);
+  const channel = useMemo(() => wsChannels.allMids(dex), [dex]);
 
-  // Default dex mids
-  const defaultQuery = useQuery({
-    queryKey: ["allMids"],
-    queryFn: () => fetchAllMids(),
+  const query = useQuery({
+    queryKey,
+    queryFn: () => fetchAllMids(dex),
     staleTime: Infinity,
   });
 
-  // xyz dex mids
-  const xyzQuery = useQuery({
-    queryKey: ["allMids", XYZ_DEX],
-    queryFn: () => fetchAllMids(XYZ_DEX),
-    staleTime: Infinity,
-  });
+  const handleWsMessage = useCallback(
+    (data: unknown) => {
+      const { mids } = data as WsAllMidsData;
+      if (mids) queryClient.setQueryData<AllMids>(queryKey, mids);
+    },
+    [queryClient, queryKey]
+  );
 
-  // Merge both into a single object
-  const merged: AllMids = { ...(defaultQuery.data ?? {}), ...(xyzQuery.data ?? {}) };
+  useWsSubscription(channel, handleWsMessage);
+  return query;
+}
+
+/**
+ * Live mid prices for every market, merged across both dexes.
+ * `midsRef` gives order execution the latest prices without re-rendering on each tick.
+ */
+export function useAllMids() {
+  const defaultQuery = useDexMids();
+  const xyzQuery = useDexMids(XYZ_DEX);
+
+  const mids = useMemo<AllMids>(
+    () => ({ ...(defaultQuery.data ?? {}), ...(xyzQuery.data ?? {}) }),
+    [defaultQuery.data, xyzQuery.data]
+  );
+
+  const midsRef = useRef(mids);
   useEffect(() => {
-    midsRef.current = merged;
-  });
-
-  // WS handler for default dex
-  const handleDefaultWs = useCallback(
-    (data: unknown) => {
-      const d = data as WsAllMidsData;
-      if (d.mids) {
-        queryClient.setQueryData<AllMids>(["allMids"], d.mids);
-        midsRef.current = { ...midsRef.current, ...d.mids };
-      }
-    },
-    [queryClient]
-  );
-
-  // WS handler for xyz dex
-  const handleXyzWs = useCallback(
-    (data: unknown) => {
-      const d = data as WsAllMidsData;
-      if (d.mids) {
-        queryClient.setQueryData<AllMids>(["allMids", XYZ_DEX], d.mids);
-        midsRef.current = { ...midsRef.current, ...d.mids };
-      }
-    },
-    [queryClient]
-  );
-
-  useWsSubscription("allMids", handleDefaultWs);
-  useWsSubscription("allMids:xyz", handleXyzWs);
+    midsRef.current = mids;
+  }, [mids]);
 
   return {
-    mids: merged,
+    mids,
     midsRef,
     isLoading: defaultQuery.isLoading || xyzQuery.isLoading,
   };

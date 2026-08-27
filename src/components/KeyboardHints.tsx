@@ -1,42 +1,31 @@
 "use client";
 
-import { useTradingStore } from "@/stores/tradingStore";
+export interface Hint {
+  key: string;
+  label: string;
+}
 
-const hints = [
-  { key: "↑↓", label: "Size" },
-  { key: "Enter", label: "Execute" },
-  { key: "Space", label: "Step" },
-  { key: "S", label: "Side" },
-  { key: "Q", label: "Denom" },
-  { key: "M", label: "Market" },
-  { key: "I", label: "Interval" },
-  { key: "T", label: "Theme" },
-];
-
-export default function KeyboardHints() {
-  const selectedCoin = useTradingStore((s) => s.selectedCoin);
-  const side = useTradingStore((s) => s.side);
-  const candleInterval = useTradingStore((s) => s.candleInterval);
-  const denomination = useTradingStore((s) => s.denomination);
-
+/** Shortcut bar pinned to the bottom of a page; `children` renders as status on the right. */
+export default function KeyboardHints({
+  hints,
+  children,
+}: {
+  hints: Hint[];
+  children?: React.ReactNode;
+}) {
   return (
-    <div className="h-8 flex items-center !px-12 gap-4 border-t border-edge text-[10px] select-none overflow-x-auto bg-elevated text-muted">
-      {hints.map((h) => (
-        <div key={h.key} className="flex items-center gap-1 shrink-0">
+    <div className="h-8 flex items-center px-12 gap-4 border-t border-edge text-[10px] select-none overflow-x-auto bg-elevated text-muted">
+      {hints.map((hint) => (
+        <div key={hint.key} className="flex items-center gap-1 shrink-0">
           <kbd className="px-1 py-0.5 rounded bg-panel text-subtle">
-            {h.key}
+            {hint.key}
           </kbd>
-          <span>{h.label}</span>
+          <span>{hint.label}</span>
         </div>
       ))}
-      <div className="ml-auto flex items-center gap-3 shrink-0">
-        <span>{selectedCoin}</span>
-        <span className={`uppercase ${side === "long" ? "text-green" : "text-red"}`}>
-          {side}
-        </span>
-        <span>{candleInterval}</span>
-        <span>{denomination}</span>
-      </div>
+      {children && (
+        <div className="ml-auto flex items-center gap-3 shrink-0">{children}</div>
+      )}
     </div>
   );
 }

@@ -1,11 +1,14 @@
 "use client";
 
 import { useEffect, useRef } from "react";
+import { getWs, type WsChannel } from "@/lib/ws";
 
-import { getWs } from "@/lib/ws";
-
+/**
+ * Subscribes to a websocket channel for the lifetime of the component.
+ * `channel` must be referentially stable (module constant or useMemo).
+ */
 export function useWsSubscription(
-  key: string | null,
+  channel: WsChannel | null,
   handler: (data: unknown) => void
 ) {
   const handlerRef = useRef(handler);
@@ -14,14 +17,10 @@ export function useWsSubscription(
   });
 
   useEffect(() => {
-    if (!key) return;
-
+    if (!channel) return;
     const ws = getWs();
-    const cb = (data: unknown) => handlerRef.current(data);
-    ws.subscribe(key, cb);
-
-    return () => {
-      ws.unsubscribe(key, cb);
-    };
-  }, [key]);
+    const listener = (data: unknown) => handlerRef.current(data);
+    ws.subscribe(channel, listener);
+    return () => ws.unsubscribe(channel, listener);
+  }, [channel]);
 }

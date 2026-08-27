@@ -4,34 +4,39 @@ import { useMemo } from "react";
 import { useOrderbook } from "@/hooks/useOrderbook";
 import { useAllMids } from "@/hooks/useAllMids";
 import { useTradingStore } from "@/stores/tradingStore";
-import { MARKETS_MAP, ORDERBOOK_LEVELS } from "@/lib/constants";
-import { formatPrice, formatSize } from "@/lib/format";
+import { baseSymbol, MARKETS_MAP, ORDERBOOK_LEVELS } from "@/lib/constants";
+import { formatPrice, formatSize, parsePrice } from "@/lib/format";
+import type { L2BookLevel } from "@/types/api";
+import type { Denomination, Market } from "@/types/trading";
 import OrderbookRow from "./OrderbookRow";
 
+interface DepthLevel {
+  price: string;
+  size: string;
+  depthPercent: number;
+}
+
+/** Formats one side of the book, with each level's bar sized by cumulative depth. */
 function buildDepthLevels(
-  levels: { px: string; sz: string }[],
-  denomination: string,
-  pxDecimals: number,
-  szDecimals: number,
-) {
-  const sizes = levels.map((l) => parseFloat(l.sz));
-  const cumulative: number[] = [];
-  let sum = 0;
-  for (const sz of sizes) {
-    sum += sz;
-    cumulative.push(sum);
-  }
-  const maxCum = cumulative[cumulative.length - 1] || 0.001;
+  levels: L2BookLevel[],
+  denomination: Denomination,
+  market: Market
+): DepthLevel[] {
+  const sizes = levels.map((level) => parseFloat(level.sz));
+  const totalSize = sizes.reduce((sum, size) => sum + size, 0) || 1;
+
+  let cumulative = 0;
   return levels.map((level, i) => {
-    const sz = sizes[i];
-    const displaySize =
-      denomination === "USD"
-        ? (sz * parseFloat(level.px)).toFixed(0)
-        : formatSize(sz, szDecimals);
+    const size = sizes[i];
+    const price = parseFloat(level.px);
+    cumulative += size;
     return {
-      price: formatPrice(parseFloat(level.px), pxDecimals),
-      size: displaySize,
-      depthPercent: (cumulative[i] / maxCum) * 100,
+      price: formatPrice(price, market.pxDecimals),
+      size:
+        denomination === "USD"
+          ? (size * price).toFixed(0)
+          : formatSize(size, market.szDecimals),
+      depthPercent: (cumulative / totalSize) * 100,
     };
   });
 }
@@ -43,58 +48,52 @@ export default function Orderbook() {
   const { mids } = useAllMids();
 
   const market = MARKETS_MAP[selectedCoin];
-  const midPrice = mids[selectedCoin] ? parseFloat(mids[selectedCoin]) : null;
+  const midPrice = parsePrice(mids[selectedCoin]);
 
-  const displayAsks = useMemo(() => {
-    return buildDepthLevels(asks.slice(0, ORDERBOOK_LEVELS), denomination, market.pxDecimals, market.szDecimals).reverse();
-  }, [asks, denomination, market]);
+  // Asks are reversed so the lowest ask sits next to the mid price.
+  const displayAsks = useMemo(
+    () =>
+      buildDepthLevels(
+        asks.slice(0, ORDERBOOK_LEVELS),
+        denomination,
+        market
+      ).reverse(),
+    [asks, denomination, market]
+  );
 
-  const displayBids = useMemo(() => {
-    return buildDepthLevels(bids.slice(0, ORDERBOOK_LEVELS), denomination, market.pxDecimals, market.szDecimals);
-  }, [bids, denomination, market]);
+  const displayBids = useMemo(
+    () => buildDepthLevels(bids.slice(0, ORDERBOOK_LEVELS), denomination, market),
+    [bids, denomination, market]
+  );
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
-      {/* Header */}
-      <div className="flex items-center justify-between !px-4 !py-1.5 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
+      <div className="flex items-center justify-between px-4 py-1.5 text-[10px] uppercase tracking-wider border-b border-edge text-muted">
         <span>Price</span>
-        <span>{denomination === "USD" ? "Size (USD)" : `Size (${selectedCoin})`}</span>
+        <span>
+          Size ({denomination === "USD" ? "USD" : baseSymbol(selectedCoin)})
+        </span>
       </div>
 
-      {isLoading && bids.length === 0 ? (
+      {isLoading && bids.length === 0 && (
         <div className="flex-1 flex items-center justify-center text-xs text-muted">
           Loading orderbook…
         </div>
-      ) : null}
+      )}
 
-      {/* Asks (reversed so lowest ask is at bottom) */}
       <div className="flex-1 flex flex-col justify-end overflow-hidden">
-        {displayAsks.map((row, i) => (
-          <OrderbookRow
-            key={`ask-${i}`}
-            price={row.price}
-            size={row.size}
-            depthPercent={row.depthPercent}
-            side="ask"
-          />
+        {displayAsks.map((row) => (
+          <OrderbookRow key={`ask-${row.price}`} {...row} side="ask" />
         ))}
       </div>
 
-      {/* Spread / mid price */}
       <div className="flex items-center justify-center py-1 text-xs font-semibold border-y border-edge text-fg">
         {midPrice !== null ? formatPrice(midPrice, market.pxDecimals) : "—"}
       </div>
 
-      {/* Bids */}
       <div className="flex-1 overflow-hidden">
-        {displayBids.map((row, i) => (
-          <OrderbookRow
-            key={`bid-${i}`}
-            price={row.price}
-            size={row.size}
-            depthPercent={row.depthPercent}
-            side="bid"
-          />
+        {displayBids.map((row) => (
+          <OrderbookRow key={`bid-${row.price}`} {...row} side="bid" />
         ))}
       </div>
     </div>

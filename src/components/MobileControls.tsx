@@ -1,5 +1,6 @@
 "use client";
 
+import { baseSymbol } from "@/lib/constants";
 import { useTradingStore } from "@/stores/tradingStore";
 import MarketDropdown from "./MarketDropdown";
 
@@ -9,7 +10,14 @@ interface MobileControlsProps {
   onToggleOrderbook: () => void;
 }
 
-export default function MobileControls({ onExecute, showOrderbook, onToggleOrderbook }: MobileControlsProps) {
+const CONTROL_CLASS =
+  "px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge";
+
+export default function MobileControls({
+  onExecute,
+  showOrderbook,
+  onToggleOrderbook,
+}: MobileControlsProps) {
   const selectedCoin = useTradingStore((s) => s.selectedCoin);
   const side = useTradingStore((s) => s.side);
   const candleInterval = useTradingStore((s) => s.candleInterval);
@@ -19,43 +27,31 @@ export default function MobileControls({ onExecute, showOrderbook, onToggleOrder
   const cycleCandleInterval = useTradingStore((s) => s.cycleCandleInterval);
 
   return (
-    <div className="flex items-center gap-1 !px-6 !py-1 md:hidden overflow-x-auto">
+    <div className="flex items-center gap-1 px-6 py-1 md:hidden overflow-x-auto">
       <MarketDropdown
         className="relative shrink-0"
         itemClassName="px-3 py-1.5 text-[10px]"
         renderTrigger={(toggle) => (
-          <button
-            onClick={toggle}
-            className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
-          >
-            {selectedCoin} ▾
+          <button onClick={toggle} className={CONTROL_CLASS}>
+            {baseSymbol(selectedCoin)} ▾
           </button>
         )}
       />
       <button
         onClick={toggleSide}
-        className={`px-2 py-1 rounded text-[10px] font-bold uppercase shrink-0 bg-elevated border border-edge ${
+        className={`${CONTROL_CLASS} font-bold uppercase ${
           side === "long" ? "text-green" : "text-red"
         }`}
       >
         {side}
       </button>
-      <button
-        onClick={cycleCandleInterval}
-        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
-      >
+      <button onClick={cycleCandleInterval} className={CONTROL_CLASS}>
         {candleInterval}
       </button>
-      <button
-        onClick={toggleDenomination}
-        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
-      >
+      <button onClick={toggleDenomination} className={CONTROL_CLASS}>
         {denomination}
       </button>
-      <button
-        onClick={onToggleOrderbook}
-        className="px-2 py-1 rounded text-[10px] shrink-0 bg-elevated text-subtle border border-edge"
-      >
+      <button onClick={onToggleOrderbook} className={CONTROL_CLASS}>
         Book {showOrderbook ? "▴" : "▾"}
       </button>
       <button
